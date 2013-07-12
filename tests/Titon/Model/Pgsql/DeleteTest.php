@@ -5,13 +5,13 @@
  * @link		http://titon.io
  */
 
-namespace Titon\Model\Postgresql;
+namespace Titon\Model\Pgsql;
 
-use Titon\Model\Data\AbstractCallbackTest;
+use Titon\Model\Data\AbstractDeleteTest;
 
 /**
- * Test class for model callbacks.
+ * Test class for database record deleting.
  */
-class CallbackTest extends AbstractCallbackTest {
+class DeleteTest extends AbstractDeleteTest {
 
 }

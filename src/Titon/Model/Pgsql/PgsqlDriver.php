@@ -5,16 +5,16 @@
  * @link		http://titon.io
  */
 
-namespace Titon\Model\Postgresql;
+namespace Titon\Model\Pgsql;
 
 use Titon\Model\Driver\AbstractPdoDriver;
 
 /**
  * A driver that represents the PostgreSQL database and uses PDO.
  *
- * @package Titon\Model\Postgresql
+ * @package Titon\Model\Pgsql
  */
-class PostgresqlDriver extends AbstractPdoDriver {
+class PgsqlDriver extends AbstractPdoDriver {
 
 	/**
 	 * Configuration.
@@ -27,7 +27,7 @@ class PostgresqlDriver extends AbstractPdoDriver {
 	 * Set the dialect.
 	 */
 	public function initialize() {
-		$this->setDialect(new PostgresqlDialect($this));
+		$this->setDialect(new PgsqlDialect($this));
 	}
 
 	/**

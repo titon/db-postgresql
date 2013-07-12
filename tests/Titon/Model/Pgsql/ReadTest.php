@@ -5,13 +5,13 @@
  * @link		http://titon.io
  */
 
-namespace Titon\Model\Postgresql;
+namespace Titon\Model\Pgsql;
 
-use Titon\Model\Data\AbstractMiscTest;
+use Titon\Model\Data\AbstractReadTest;
 
 /**
- * Test class for misc database functionality.
+ * Test class for database reading.
  */
-class MiscTest extends AbstractMiscTest {
+class ReadTest extends AbstractReadTest {
 
 }

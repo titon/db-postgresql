@@ -5,13 +5,13 @@
  * @link		http://titon.io
  */
 
-namespace Titon\Model\Postgresql;
+namespace Titon\Model\Pgsql;
 
-use Titon\Model\Data\AbstractCreateTest;
+use Titon\Model\Data\AbstractUpsertTest;
 
 /**
- * Test class for database inserting.
+ * Test class for database upserting.
  */
-class CreateTest extends AbstractCreateTest {
+class UpsertTest extends AbstractUpsertTest {
 
 }

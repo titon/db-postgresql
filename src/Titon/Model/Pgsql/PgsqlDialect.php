@@ -5,7 +5,7 @@
  * @link		http://titon.io
  */
 
-namespace Titon\Model\Postgresql;
+namespace Titon\Model\Pgsql;
 
 use Titon\Model\Driver\Dialect\AbstractDialect;
 use Titon\Model\Driver\Schema;
@@ -15,9 +15,9 @@ use Titon\Model\Query;
 /**
  * Inherit the default dialect rules and override for PostgreSQL specific syntax.
  *
- * @package Titon\Model\Postgresql
+ * @package Titon\Model\Pgsql
  */
-class PostgresqlDialect extends AbstractDialect {
+class PgsqlDialect extends AbstractDialect {
 
 	const CONTINUE_IDENTITY = 'continueIdentity';
 	const DELETE_ROWS = 'deleteRows';

@@ -5,13 +5,13 @@
  * @link		http://titon.io
  */
 
-namespace Titon\Model\Postgresql;
+namespace Titon\Model\Pgsql;
 
-use Titon\Model\Data\AbstractUpdateTest;
+use Titon\Model\Data\AbstractMiscTest;
 
 /**
- * Test class for database updating.
+ * Test class for misc database functionality.
  */
-class UpdateTest extends AbstractUpdateTest {
+class MiscTest extends AbstractMiscTest {
 
 }

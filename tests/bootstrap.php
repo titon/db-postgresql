@@ -16,7 +16,7 @@ if (!file_exists(VENDOR_DIR . '/autoload.php')) {
 }
 
 $loader = require VENDOR_DIR . '/autoload.php';
-$loader->add('Titon\\Model\\Postgresql', TEST_DIR);
+$loader->add('Titon\\Model\\Pgsql', TEST_DIR);
 $loader->add('Titon\\Model\\Data', VENDOR_DIR . '/titon/model/tests');
 $loader->add('Titon\\Model\\Driver', VENDOR_DIR . '/titon/model/tests');
 
@@ -32,4 +32,4 @@ Titon\Common\Config::set('db', $db);
 
 // Used by models
 Titon\Common\Registry::factory('Titon\Model\Connection')
-	->addDriver(new Titon\Model\Postgresql\PostgresqlDriver('default', $db));
+	->addDriver(new Titon\Model\Pgsql\PgsqlDriver('default', $db));

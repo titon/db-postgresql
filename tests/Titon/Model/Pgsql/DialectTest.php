@@ -11,8 +11,8 @@ use Exception;
 use Titon\Common\Config;
 use Titon\Model\Driver\Dialect;
 use Titon\Model\Driver\Schema;
-use Titon\Model\Postgresql\PostgresqlDialect;
-use Titon\Model\Postgresql\PostgresqlDriver;
+use Titon\Model\Pgsql\PgsqlDialect;
+use Titon\Model\Pgsql\PgsqlDriver;
 use Titon\Model\Query;
 use Titon\Test\Stub\Model\User;
 
@@ -25,7 +25,7 @@ class DialectTest extends \Titon\Model\Driver\DialectTest {
 	 * This method is called before a test is executed.
 	 */
 	protected function setUp() {
-		$this->driver = new PostgresqlDriver('default', Config::get('db'));
+		$this->driver = new PgsqlDriver('default', Config::get('db'));
 		$this->driver->connect();
 
 		$this->object = $this->driver->getDialect();
@@ -62,13 +62,13 @@ class DialectTest extends \Titon\Model\Driver\DialectTest {
 
 		$this->assertRegExp('/CREATE\s+TABLE IF NOT EXISTS (`|\")foobar(`|\") \(\n(`|\")column(`|\") integer NOT NULL,\n(`|\")column2(`|\") integer NULL,\nPRIMARY KEY \((`|\")column(`|\")\)\n\);/', $this->object->buildCreateTable($query));
 
-		$schema->addOption('onCommit', PostgresqlDialect::DELETE_ROWS);
+		$schema->addOption('onCommit', PgsqlDialect::DELETE_ROWS);
 		$this->assertRegExp('/CREATE\s+TABLE IF NOT EXISTS (`|\")foobar(`|\") \(\n(`|\")column(`|\") integer NOT NULL,\n(`|\")column2(`|\") integer NULL,\nPRIMARY KEY \((`|\")column(`|\")\)\n\) ON COMMIT DELETE ROWS;/', $this->object->buildCreateTable($query));
 
 		$schema->addOption('tablespace', 'foobar');
 		$this->assertRegExp('/CREATE\s+TABLE IF NOT EXISTS (`|\")foobar(`|\") \(\n(`|\")column(`|\") integer NOT NULL,\n(`|\")column2(`|\") integer NULL,\nPRIMARY KEY \((`|\")column(`|\")\)\n\) ON COMMIT DELETE ROWS TABLESPACE foobar;/', $this->object->buildCreateTable($query));
 
-		$schema->addOption('with', PostgresqlDialect::WITH_OIDS);
+		$schema->addOption('with', PgsqlDialect::WITH_OIDS);
 		$this->assertRegExp('/CREATE\s+TABLE IF NOT EXISTS (`|\")foobar(`|\") \(\n(`|\")column(`|\") integer NOT NULL,\n(`|\")column2(`|\") integer NULL,\nPRIMARY KEY \((`|\")column(`|\")\)\n\) ON COMMIT DELETE ROWS TABLESPACE foobar WITH OIDS;/', $this->object->buildCreateTable($query));
 	}
 
@@ -119,7 +119,7 @@ class DialectTest extends \Titon\Model\Driver\DialectTest {
 
 		$this->assertRegExp('/DROP TABLE IF EXISTS (`|\")foobar(`|\");/', $this->object->buildDropTable($query));
 
-		$query->attribute('action', PostgresqlDialect::RESTRICT);
+		$query->attribute('action', PgsqlDialect::RESTRICT);
 		$this->assertRegExp('/DROP TABLE IF EXISTS (`|\")foobar(`|\") RESTRICT;/', $this->object->buildDropTable($query));
 	}
 
@@ -132,13 +132,13 @@ class DialectTest extends \Titon\Model\Driver\DialectTest {
 
 		$this->assertRegExp('/TRUNCATE\s+(`|\")foobar(`|\");/', $this->object->buildTruncate($query));
 
-		$query->attribute('identity', PostgresqlDialect::RESTART_IDENTITY);
+		$query->attribute('identity', PgsqlDialect::RESTART_IDENTITY);
 		$this->assertRegExp('/TRUNCATE\s+(`|\")foobar(`|\") RESTART IDENTITY;/', $this->object->buildTruncate($query));
 
 		$query->attribute('only', true);
 		$this->assertRegExp('/TRUNCATE ONLY (`|\")foobar(`|\") RESTART IDENTITY;/', $this->object->buildTruncate($query));
 
-		$query->attribute('action', PostgresqlDialect::CASCADE);
+		$query->attribute('action', PgsqlDialect::CASCADE);
 		$this->assertRegExp('/TRUNCATE ONLY (`|\")foobar(`|\") RESTART IDENTITY CASCADE;/', $this->object->buildTruncate($query));
 	}
 

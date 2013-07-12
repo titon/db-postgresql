@@ -8,7 +8,7 @@
 namespace Titon\Model\Sqlite;
 
 use Titon\Common\Config;
-use Titon\Model\Postgresql\PostgresqlDriver;
+use Titon\Model\Pgsql\PgsqlDriver;
 use Titon\Test\Stub\Model\User;
 
 /**
@@ -20,7 +20,7 @@ class DriverTest extends \Titon\Model\Driver\PdoDriverTest {
 	 * This method is called before a test is executed.
 	 */
 	protected function setUp() {
-		$this->object = new PostgresqlDriver('default', Config::get('db'));
+		$this->object = new PgsqlDriver('default', Config::get('db'));
 		$this->object->connect();
 
 		$this->model = new User();
