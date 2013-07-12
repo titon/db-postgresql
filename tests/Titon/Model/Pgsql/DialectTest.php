@@ -32,6 +32,31 @@ class DialectTest extends \Titon\Model\Driver\DialectTest {
 	}
 
 	/**
+	 * Test create index statement building.
+	 */
+	public function testBuildCreateIndex() {
+		$query = new Query(Query::CREATE_INDEX, new User());
+		$query->fields('profile_id')->from('users')->asAlias('idx');
+
+		$this->assertRegExp('/CREATE\s+INDEX\s+(`|\")idx(`|\") ON (`|\")users(`|\") \((`|\")profile_id(`|\")\)/', $this->object->buildCreateIndex($query));
+
+		$query->fields(['profile_id' => 5]);
+		$this->assertRegExp('/CREATE\s+INDEX\s+(`|\")idx(`|\") ON (`|\")users(`|\") \((`|\")profile_id(`|\")\(5\)\)/', $this->object->buildCreateIndex($query));
+
+		$query->fields(['profile_id' => 'asc', 'other_id']);
+		$this->assertRegExp('/CREATE\s+INDEX\s+(`|\")idx(`|\") ON (`|\")users(`|\") \((`|\")profile_id(`|\") ASC, (`|\")other_id(`|\")\)/', $this->object->buildCreateIndex($query));
+
+		$query->fields(['profile_id' => ['length' => 5, 'order' => 'desc']]);
+		$this->assertRegExp('/CREATE\s+INDEX\s+(`|\")idx(`|\") ON (`|\")users(`|\") \((`|\")profile_id(`|\")\(5\) DESC\)/', $this->object->buildCreateIndex($query));
+
+		$query->fields('profile_id')->attribute([
+			'type' => PgsqlDialect::UNIQUE,
+			'concurrently' => true
+		]);
+		$this->assertRegExp('/CREATE UNIQUE INDEX CONCURRENTLY (`|\")idx(`|\") ON (`|\")users(`|\") \((`|\")profile_id(`|\")\)/', $this->object->buildCreateIndex($query));
+	}
+
+	/**
 	 * Test create table statement creation.
 	 */
 	public function testBuildCreateTable() {
@@ -104,13 +129,6 @@ class DialectTest extends \Titon\Model\Driver\DialectTest {
 	}
 
 	/**
-	 * Test describe statement creation.
-	 */
-	public function testBuildDescribe() {
-		$this->markTestSkipped('PGSQL does not support the DESCRIBE statement');
-	}
-
-	/**
 	 * Test drop table statement creation.
 	 */
 	public function testBuildDropTable() {
@@ -121,6 +139,19 @@ class DialectTest extends \Titon\Model\Driver\DialectTest {
 
 		$query->attribute('action', PgsqlDialect::RESTRICT);
 		$this->assertRegExp('/DROP TABLE IF EXISTS (`|\")foobar(`|\") RESTRICT;/', $this->object->buildDropTable($query));
+	}
+
+	/**
+	 * Test drop index statement building.
+	 */
+	public function testBuildDropIndex() {
+		$query = new Query(Query::DROP_INDEX, new User());
+		$query->from('users')->asAlias('idx');
+
+		$this->assertRegExp('/DROP INDEX\s+IF EXISTS (`|\")idx(`|\")/', $this->object->buildDropIndex($query));
+
+		$query->attribute('concurrently', true);
+		$this->assertRegExp('/DROP INDEX CONCURRENTLY IF EXISTS (`|\")idx(`|\")/', $this->object->buildDropIndex($query));
 	}
 
 	/**
@@ -269,7 +300,7 @@ class DialectTest extends \Titon\Model\Driver\DialectTest {
 
 		// inherits values from type
 		$schema->addColumn('column4', [
-			'type' => 'datetime'
+			'type' => 'timestamp'
 		]);
 
 		$expected .= ',\n(`|\")column4(`|\") timestamp NULL DEFAULT NULL';
@@ -278,11 +309,11 @@ class DialectTest extends \Titon\Model\Driver\DialectTest {
 
 		$schema->addColumn('column5', [
 			'type' => 'varchar',
-			'collate' => 'utf8_general_ci',
+			'collate' => 'en_US',
 			'charset' => 'utf8'
 		]);
 
-		$expected .= ',\n(`|\")column5(`|\") varchar\(255\) COLLATE utf8_general_ci NULL';
+		$expected .= ',\n(`|\")column5(`|\") varchar\(255\) COLLATE en_US NULL';
 
 		$this->assertRegExp('/' . $expected . '/', $this->object->formatColumns($schema));
 	}
@@ -372,6 +403,17 @@ class DialectTest extends \Titon\Model\Driver\DialectTest {
 	public function testQuoteList() {
 		$this->assertEquals('"foo", "bar", "baz"', $this->object->quoteList(['foo', '"bar', '"baz"']));
 		$this->assertEquals('"foo"."bar", "baz"', $this->object->quoteList(['foo.bar', '"baz"']));
+	}
+
+	/**
+	 * Test collation verification.
+	 */
+	public function testVerifyCollate() {
+		$this->assertFalse($this->object->verifyCollate('en'));
+		$this->assertFalse($this->object->verifyCollate('en-'));
+		$this->assertFalse($this->object->verifyCollate('en-US'));
+		$this->assertFalse($this->object->verifyCollate('en-us'));
+		$this->assertTrue($this->object->verifyCollate('en_US'));
 	}
 
 }

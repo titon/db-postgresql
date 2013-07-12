@@ -19,6 +19,7 @@ use Titon\Model\Query;
  */
 class PgsqlDialect extends AbstractDialect {
 
+	const CONCURRENTLY = 'concurrently';
 	const CONTINUE_IDENTITY = 'continueIdentity';
 	const DELETE_ROWS = 'deleteRows';
 	const DROP = 'drop';
@@ -36,6 +37,7 @@ class PgsqlDialect extends AbstractDialect {
 	const RETURNING = 'returning';
 	const SET_DEFAULT = 'setDefault';
 	const TABLESPACE = 'tablespace';
+	const UNIQUE = 'unique';
 	const UNLOGGED = 'unlogged';
 	const WITH = 'with';
 	const WITH_OIDS = 'withOids';
@@ -61,8 +63,10 @@ class PgsqlDialect extends AbstractDialect {
 		Query::UPDATE		=> 'UPDATE {a.only} {table} SET {fields} {where}',
 		Query::DELETE		=> 'DELETE FROM {a.only} {table} {joins} {where}',
 		Query::TRUNCATE		=> 'TRUNCATE {a.only} {table} {a.identity} {a.action}',
+		Query::CREATE_TABLE	=> "CREATE {a.type} {a.temporary} {a.unlogged} TABLE IF NOT EXISTS {table} (\n{columns}{keys}\n) {options}",
+		Query::CREATE_INDEX	=> 'CREATE {a.type} INDEX {a.concurrently} {index} ON {table} ({fields})',
 		Query::DROP_TABLE	=> 'DROP TABLE IF EXISTS {table} {a.action}',
-		Query::CREATE_TABLE	=> "CREATE {a.type} {a.temporary} {a.unlogged} TABLE IF NOT EXISTS {table} (\n{columns}{keys}\n) {options}"
+		Query::DROP_INDEX	=> 'DROP INDEX {a.concurrently} IF EXISTS {index} {a.action}',
 	];
 
 	/**
@@ -71,7 +75,6 @@ class PgsqlDialect extends AbstractDialect {
 	 * @type array
 	 */
 	protected $_attributes = [
-		Query::INSERT => [],
 		Query::SELECT => [
 			'distinct' => false
 		],
@@ -86,13 +89,21 @@ class PgsqlDialect extends AbstractDialect {
 			'identity' => '', // restart, continue
 			'action' => '' // cascade, restrict
 		],
-		Query::DROP_TABLE => [
-			'action' => ''
-		],
 		Query::CREATE_TABLE => [
 			'type' => '',
 			'temporary' => false,
 			'unlogged' => false
+		],
+		Query::CREATE_INDEX => [
+			'type' => '', // unique
+			'concurrently' => false
+		],
+		Query::DROP_TABLE => [
+			'action' => '' // cascade, restrict
+		],
+		Query::DROP_INDEX => [
+			'concurrently' => false,
+			'action' => '' // cascade, restrict
 		],
 	];
 
@@ -110,6 +121,7 @@ class PgsqlDialect extends AbstractDialect {
 		]);
 
 		$this->_keywords = array_replace($this->_keywords, [
+			self::CONCURRENTLY		=> 'CONCURRENTLY',
 			self::CONTINUE_IDENTITY	=> 'CONTINUE IDENTITY',
 			self::DELETE_ROWS 		=> 'DELETE ROWS',
 			self::DROP				=> 'DROP',
@@ -125,6 +137,7 @@ class PgsqlDialect extends AbstractDialect {
 			self::RESTART_IDENTITY	=> 'RESTART IDENTITY',
 			self::SET_DEFAULT		=> 'SET DEFAULT',
 			self::TABLESPACE		=> 'TABLESPACE',
+			self::UNIQUE			=> 'UNIQUE',
 			self::UNLOGGED			=> 'UNLOGGED',
 			self::WITH_OIDS			=> 'WITH OIDS',
 			self::WITHOUT_OIDS		=> 'WITHOUT OIDS'
@@ -134,55 +147,13 @@ class PgsqlDialect extends AbstractDialect {
 	/**
 	 * {@inheritdoc}
 	 */
-	public function buildTruncate(Query $query) {
-		$params = $this->renderAttributes($query->getAttributes() + $this->getAttributes(Query::TRUNCATE));
-		$params = $params + [
-			'table' => $this->formatTable($query->getTable())
-		];
-
-		return $this->renderStatement($this->getStatement(Query::TRUNCATE), $params);
-	}
-
-	/**
-	 * Map between MySQL and PgSQL types.
-	 *
-	 * @param string $type
-	 * @return string
-	 */
-	public function mapType($type) {
-		switch ($type) {
-			case 'tinyint':
-				$type = 'smallint';
-			break;
-			case 'double':
-				$type = 'double precision';
-			break;
-			case 'blob':
-			case 'tinyblob':
-			case 'mediumblob':
-			case 'longblob':
-				$type = 'bytea';
-			break;
-			case 'datetime':
-				$type = 'timestamp';
-			break;
-		}
-
-		return $type;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
 	public function formatColumns(Schema $schema) {
 		$columns = [];
 
 		foreach ($schema->getColumns() as $column => $options) {
-			$baseType = $this->mapType($options['type']);
-			$dataType = AbstractType::factory($baseType, $this->getDriver());
+			$dataType = AbstractType::factory($options['type'], $this->getDriver());
 
-			$options = $dataType->getDefaultOptions() + $options;
-			$options['type'] = $baseType;
+			$options = $options + $dataType->getDefaultOptions();
 			$type = $options['type'];
 
 			if ($type === 'int') {
@@ -195,7 +166,7 @@ class PgsqlDialect extends AbstractDialect {
 
 			$output = [$this->quote($column), $type];
 
-			if (!empty($options['collate'])) {
+			if (!empty($options['collate']) && $this->verifyCollate($options['collate'])) {
 				$output[] = sprintf($this->getClause(self::COLLATE), $options['collate']);
 			}
 
@@ -216,10 +187,13 @@ class PgsqlDialect extends AbstractDialect {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * Verify the collation is Pgsql specific since it can inherit Mysql style.
+	 *
+	 * @param string $collate
+	 * @return bool
 	 */
-	public function formatTableIndex($index, array $columns) {
-		return ''; // PGSQL does not support indices within a CREATE TABLE statement
+	public function verifyCollate($collate) {
+		return (bool) preg_match('/[a-z]{2}_[A-Z]{2}/', $collate);
 	}
 
 }
