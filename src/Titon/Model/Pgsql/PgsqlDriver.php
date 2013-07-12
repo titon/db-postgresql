@@ -8,6 +8,7 @@
 namespace Titon\Model\Pgsql;
 
 use Titon\Model\Driver\AbstractPdoDriver;
+use Titon\Model\Model;
 
 /**
  * A driver that represents the PostgreSQL database and uses PDO.
@@ -45,15 +46,18 @@ class PgsqlDriver extends AbstractPdoDriver {
 			return $dsn;
 		}
 
-		$params = [
+		return $this->getDriver() . ':' . implode(';', [
 			'dbname=' . $this->getDatabase(),
 			'host=' . $this->getHost(),
 			'port=' . $this->getPort()
-		];
+		]);
+	}
 
-		$dsn = $this->getDriver() . ':' . implode(';', $params);
-
-		return $dsn;
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getLastInsertID(Model $model) {
+		return $this->getConnection()->lastInsertId($model->getTable() . '_' . $model->getPrimaryKey() . '_seq');
 	}
 
 	/**
@@ -64,8 +68,8 @@ class PgsqlDriver extends AbstractPdoDriver {
 		return [
 			'bigint' => 'Titon\Model\Driver\Type\BigintType',
 			'int8' => 'Titon\Model\Driver\Type\BigintType',
-			'bigserial' => 'Titon\Model\Driver\Type\SerialType',
-			'serial8' => 'Titon\Model\Driver\Type\SerialType',
+			'bigserial' => 'Titon\Model\Pgsql\Type\SerialType',
+			'serial8' => 'Titon\Model\Pgsql\Type\SerialType',
 			'bit' => 'Titon\Model\Driver\Type\BinaryType',
 			'bit varying' => 'Titon\Model\Driver\Type\BinaryType',
 			'varbit' => 'Titon\Model\Driver\Type\BinaryType',
@@ -100,8 +104,10 @@ class PgsqlDriver extends AbstractPdoDriver {
 			'float4' => 'Titon\Model\Driver\Type\FloatType',
 			'smallint' => 'Titon\Model\Driver\Type\IntType',
 			'int2' => 'Titon\Model\Driver\Type\IntType',
-			// smallserial, serial2
-			// serial, serial4
+			'smallserial' => 'Titon\Model\Pgsql\Type\SerialType',
+			'serial2' => 'Titon\Model\Pgsql\Type\SerialType',
+			'serial' => 'Titon\Model\Pgsql\Type\SerialType',
+			'serial4' => 'Titon\Model\Pgsql\Type\SerialType',
 			'text' => 'Titon\Model\Driver\Type\TextType',
 			'time' => 'Titon\Model\Driver\Type\TimeType',
 			'timestamp' => 'Titon\Model\Driver\Type\DatetimeType',
