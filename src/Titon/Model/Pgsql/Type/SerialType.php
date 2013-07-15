@@ -18,7 +18,7 @@ class SerialType extends \Titon\Model\Driver\Type\SerialType {
 	 * {@inheritdoc}
 	 */
 	public function getDefaultOptions() {
-		return ['null' => false];
+		return ['null' => false, 'primary' => true];
 	}
 
 }

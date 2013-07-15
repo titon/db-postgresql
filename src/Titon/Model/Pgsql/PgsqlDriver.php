@@ -8,6 +8,7 @@
 namespace Titon\Model\Pgsql;
 
 use Titon\Model\Driver\AbstractPdoDriver;
+use Titon\Model\Driver\Type\AbstractType;
 use Titon\Model\Model;
 
 /**
@@ -29,6 +30,71 @@ class PgsqlDriver extends AbstractPdoDriver {
 	 */
 	public function initialize() {
 		$this->setDialect(new PgsqlDialect($this));
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * @uses Titon\Model\Type\AbstractType
+	 */
+	public function describeTable($table) {
+		return $this->cache([__METHOD__, $table], function() use ($table) {
+			$columns = $this->query('SELECT * FROM information_schema.columns WHERE table_catalog = ? AND table_schema = \'public\' AND table_name = ?;', [$this->getDatabase(), $table])->fetchAll(false);
+			$schema = [];
+
+			if (!$columns) {
+				return $schema;
+			}
+
+			foreach ($columns as $column) {
+				$field = $column['column_name'];
+				$type = strtolower($column['data_type']);
+				$length = $column['character_maximum_length'];
+
+				// Determine type and length
+				if (preg_match('/([a-z\s]+)(?:\(([0-9,]+)\))?/is', $type, $matches)) {
+					$type = $matches[1];
+
+					if (isset($matches[2])) {
+						$length = $matches[2];
+					}
+				}
+
+				// Inherit type defaults
+				$data = AbstractType::factory($type, $this)->getDefaultOptions();
+
+				// Overwrite with custom
+				$data = [
+					'field' => $field,
+					'type' => $type,
+					'length' => $length,
+					'null' => ($column['is_nullable'] === 'YES'),
+				] + $data;
+
+				foreach ([
+					'default' => 'column_default',
+					'charset' => 'character_set_name',
+					'collate' => 'collation_name'
+				] as $key => $search) {
+					if (!empty($column[$search])) {
+						$data[$key] = $column[$search];
+					}
+				}
+
+				if ($type === 'decimal' || $type === 'numeric') {
+					$data['length'] = $column['numeric_precision'] . ',' . $column['numeric_scale'];
+				}
+
+				if (!empty($data['default']) && strpos($data['default'], '_seq') !== false) {
+					$data['primary'] = true;
+					$data['ai'] = true;
+				}
+
+				$schema[$field] = $data;
+			}
+
+			return $schema;
+		});
 	}
 
 	/**
@@ -111,6 +177,7 @@ class PgsqlDriver extends AbstractPdoDriver {
 			'text' => 'Titon\Model\Driver\Type\TextType',
 			'time' => 'Titon\Model\Driver\Type\TimeType',
 			'timestamp' => 'Titon\Model\Driver\Type\DatetimeType',
+			'timestamp without time zone' => 'Titon\Model\Driver\Type\DatetimeType',
 			// tsquery
 			// tsvector
 			// txid_snapshot
@@ -125,6 +192,28 @@ class PgsqlDriver extends AbstractPdoDriver {
 	 */
 	public function isEnabled() {
 		return extension_loaded('pdo_pgsql');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function listTables($database = null) {
+		$database = $database ?: $this->getDatabase();
+
+		return $this->cache([__METHOD__, $database], function() use ($database) {
+			$tables = $this->query('SELECT * FROM information_schema.tables WHERE table_schema = \'public\' AND table_catalog = ?;', [$database])->fetchAll(false);
+			$schema = [];
+
+			if (!$tables) {
+				return $schema;
+			}
+
+			foreach ($tables as $table) {
+				$schema[] = $table['table_name'];
+			}
+
+			return $schema;
+		});
 	}
 
 }

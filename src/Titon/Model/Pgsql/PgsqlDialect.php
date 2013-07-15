@@ -10,7 +10,11 @@ namespace Titon\Model\Pgsql;
 use Titon\Model\Driver\Dialect\AbstractDialect;
 use Titon\Model\Driver\Schema;
 use Titon\Model\Driver\Type\AbstractType;
+use Titon\Model\Exception\InvalidQueryException;
 use Titon\Model\Query;
+use Titon\Model\Query\Expr;
+use Titon\Model\Query\Func;
+use Titon\Model\Query\SubQuery;
 
 /**
  * Inherit the default dialect rules and override for PostgreSQL specific syntax.
@@ -22,6 +26,7 @@ class PgsqlDialect extends AbstractDialect {
 	const CONCURRENTLY = 'concurrently';
 	const CONTINUE_IDENTITY = 'continueIdentity';
 	const DELETE_ROWS = 'deleteRows';
+	const DISTINCT_ON = 'distinctOn';
 	const DROP = 'drop';
 	const INHERITS = 'inherits';
 	const IS_GLOBAL = 'global';
@@ -114,8 +119,13 @@ class PgsqlDialect extends AbstractDialect {
 		parent::initialize();
 
 		$this->_clauses = array_replace($this->_clauses, [
+			self::DISTINCT_ON		=> 'DISTINCT ON (%s)',
+			self::JOIN_STRAIGHT		=> 'INNER JOIN %s ON %s',
 			self::MATCH				=> '%s',
+			self::NOT_REGEXP		=> '%s !~* ?',
 			self::RETURNING			=> 'RETURNING %s',
+			self::REGEXP			=> '%s ~* ?',
+			self::RLIKE				=> '%s ~* ?',
 			self::UNIQUE_KEY		=> 'UNIQUE (%2$s)',
 			self::WITH				=> '%s'
 		]);
@@ -174,7 +184,12 @@ class PgsqlDialect extends AbstractDialect {
 				$output[] = sprintf($this->getClause(self::CONSTRAINT), $this->quote($options['constraint']));
 			}
 
-			$output[] = $this->getKeyword(empty($options['null']) ? self::NOT_NULL : self::NULL);
+			// Primary and uniques can't be null
+			if (!empty($options['primary']) || !empty($options['unique'])) {
+				$output[] = $this->getKeyword(self::NOT_NULL);
+			} else {
+				$output[] = $this->getKeyword(empty($options['null']) ? self::NOT_NULL : self::NULL);
+			}
 
 			if (array_key_exists('default', $options)) {
 				$output[] = $this->formatDefault($options['default']);
@@ -184,6 +199,39 @@ class PgsqlDialect extends AbstractDialect {
 		}
 
 		return implode(",\n", $columns);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function formatSelectFields(array $fields, $alias = null) {
+		$columns = [];
+
+		if (empty($fields)) {
+			$columns[] = ($alias ? $this->quote($alias) . '.' : '') . '*';
+
+		} else {
+			foreach ($fields as $field) {
+				if ($field instanceof Func) {
+					$columns[] = $this->formatFunction($field);
+
+				} else if ($field instanceof Expr) {
+					$columns[] = $this->formatExpression($field);
+
+				} else if ($field instanceof SubQuery) {
+					$columns[] = $this->buildSubQuery($field);
+
+				// Alias the field since PgSQL doesn't support PDO::getColumnMeta()
+				} else if ($alias) {
+					$columns[] = sprintf($this->getClause(self::AS_ALIAS), $this->quote($alias) . '.' . $this->quote($field), $alias . '__' . $field);
+
+				} else {
+					$columns[] = $this->quote($field);
+				}
+			}
+		}
+
+		return $columns;
 	}
 
 	/**
