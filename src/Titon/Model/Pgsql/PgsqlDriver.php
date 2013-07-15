@@ -147,20 +147,20 @@ class PgsqlDriver extends AbstractPdoDriver {
 			'character' => 'Titon\Model\Driver\Type\CharType',
 			'character varying' => 'Titon\Model\Driver\Type\StringType',
 			'varchar' => 'Titon\Model\Driver\Type\StringType',
-			// cidr
+			'cidr' => 'Titon\Model\Driver\Type\StringType',
 			// circle
 			'date' => 'Titon\Model\Driver\Type\DateType',
 			'double precision' => 'Titon\Model\Driver\Type\DoubleType',
 			'float8' => 'Titon\Model\Driver\Type\DoubleType',
-			// inet
+			'inet' => 'Titon\Model\Driver\Type\StringType',
 			'int' => 'Titon\Model\Driver\Type\IntType',
 			'int4' => 'Titon\Model\Driver\Type\IntType',
 			'integer' => 'Titon\Model\Driver\Type\IntType',
 			// interval
 			// line
 			// lseg
-			// macaddr
-			// money
+			'macaddr' => 'Titon\Model\Driver\Type\StringType',
+			'money' => 'Titon\Model\Driver\Type\DecimalType',
 			'numeric' => 'Titon\Model\Driver\Type\DecimalType',
 			'decimal' => 'Titon\Model\Driver\Type\DecimalType',
 			// path
@@ -176,14 +176,18 @@ class PgsqlDriver extends AbstractPdoDriver {
 			'serial4' => 'Titon\Model\Pgsql\Type\SerialType',
 			'text' => 'Titon\Model\Driver\Type\TextType',
 			'time' => 'Titon\Model\Driver\Type\TimeType',
+			'time without time zone' => 'Titon\Model\Driver\Type\TimeType',
+			'time with time zone' => 'Titon\Model\Pgsql\Type\TimeTzType',
 			'timestamp' => 'Titon\Model\Driver\Type\DatetimeType',
 			'timestamp without time zone' => 'Titon\Model\Driver\Type\DatetimeType',
+			'timestamp with time zone' => 'Titon\Model\Pgsql\Type\DatetimeTzType',
 			// tsquery
 			// tsvector
 			// txid_snapshot
-			// uuid
+			'uuid' => 'Titon\Model\Driver\Type\StringType',
 			// xml
 			// json
+			// array
 		];
 	}
 
