@@ -14,4 +14,3 @@ Provides PostgreSQL access for the Titon Model package.
 ### To Do ###
 
 * Reading and writing of BLOB (bytea) data
-* Additional data types

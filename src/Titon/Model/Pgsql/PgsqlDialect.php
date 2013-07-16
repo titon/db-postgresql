@@ -7,10 +7,9 @@
 
 namespace Titon\Model\Pgsql;
 
-use Titon\Model\Driver\Dialect\AbstractDialect;
+use Titon\Model\Driver\Dialect\AbstractPdoDialect;
 use Titon\Model\Driver\Schema;
 use Titon\Model\Driver\Type\AbstractType;
-use Titon\Model\Exception\InvalidQueryException;
 use Titon\Model\Query;
 use Titon\Model\Query\Expr;
 use Titon\Model\Query\Func;
@@ -21,7 +20,7 @@ use Titon\Model\Query\SubQuery;
  *
  * @package Titon\Model\Pgsql
  */
-class PgsqlDialect extends AbstractDialect {
+class PgsqlDialect extends AbstractPdoDialect {
 
 	const CONCURRENTLY = 'concurrently';
 	const CONTINUE_IDENTITY = 'continueIdentity';
@@ -176,7 +175,7 @@ class PgsqlDialect extends AbstractDialect {
 
 			$output = [$this->quote($column), $type];
 
-			if (!empty($options['collate']) && $this->verifyCollate($options['collate'])) {
+			if (!empty($options['collate'])) {
 				$output[] = sprintf($this->getClause(self::COLLATE), $options['collate']);
 			}
 
@@ -219,7 +218,7 @@ class PgsqlDialect extends AbstractDialect {
 					$columns[] = $this->formatExpression($field);
 
 				} else if ($field instanceof SubQuery) {
-					$columns[] = $this->buildSubQuery($field);
+					$columns[] = $this->formatSubQuery($field);
 
 				// Alias the field since PgSQL doesn't support PDO::getColumnMeta()
 				} else if ($alias) {
@@ -232,16 +231,6 @@ class PgsqlDialect extends AbstractDialect {
 		}
 
 		return $columns;
-	}
-
-	/**
-	 * Verify the collation is Pgsql specific since it can inherit Mysql style.
-	 *
-	 * @param string $collate
-	 * @return bool
-	 */
-	public function verifyCollate($collate) {
-		return (bool) preg_match('/[a-z]{2}_[A-Z]{2}/', $collate);
 	}
 
 }

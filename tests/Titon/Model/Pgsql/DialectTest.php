@@ -429,15 +429,4 @@ class DialectTest extends \Titon\Model\Driver\DialectTest {
 		$this->assertEquals('"foo"."bar", "baz"', $this->object->quoteList(['foo.bar', '"baz"']));
 	}
 
-	/**
-	 * Test collation verification.
-	 */
-	public function testVerifyCollate() {
-		$this->assertFalse($this->object->verifyCollate('en'));
-		$this->assertFalse($this->object->verifyCollate('en-'));
-		$this->assertFalse($this->object->verifyCollate('en-US'));
-		$this->assertFalse($this->object->verifyCollate('en-us'));
-		$this->assertTrue($this->object->verifyCollate('en_US'));
-	}
-
 }
