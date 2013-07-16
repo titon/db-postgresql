@@ -1,4 +1,4 @@
-# Model.PostgreSQL v0.1.0 [![Build Status](https://travis-ci.org/titon/Model.PostgreSQL.png)](https://travis-ci.org/titon/Model.PostgreSQL) #
+# Model.PostgreSQL v0.1.1 [![Build Status](https://travis-ci.org/titon/Model.PostgreSQL.png)](https://travis-ci.org/titon/Model.PostgreSQL) #
 
 Provides PostgreSQL access for the Titon Model package.
 
