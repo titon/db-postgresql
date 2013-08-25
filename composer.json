@@ -3,7 +3,7 @@
 	"type": "library",
 	"description": "Provides PostgreSQL database access for the Titon Model package.",
 	"keywords": ["titon", "model", "driver", "postgresql", "pgsql", "pdo", "database"],
-	"homepage": "https://github.com/titon/Model.PostgreSQL",
+	"homepage": "http://titon.io",
 	"license": "BSD-2",
 	"authors": [
 		{
