@@ -9,7 +9,7 @@ Provides PostgreSQL access for the Titon Model package.
 ### Requirements ###
 
 * PHP 5.4.0
-	* pdo_pgsql
+    * pdo_pgsql
 
 ### To Do ###
 

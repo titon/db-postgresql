@@ -1,8 +1,8 @@
 <?php
 /**
- * @copyright	Copyright 2010-2013, The Titon Project
- * @license		http://opensource.org/licenses/bsd-license.php
- * @link		http://titon.io
+ * @copyright   2010-2013, The Titon Project
+ * @license     http://opensource.org/licenses/bsd-license.php
+ * @link        http://titon.io
  */
 
 namespace Titon\Model\Pgsql\Type;
@@ -14,16 +14,16 @@ namespace Titon\Model\Pgsql\Type;
  */
 class TimeTzType extends \Titon\Model\Driver\Type\TimeType {
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public $format = 'H:i:sO';
+    /**
+     * {@inheritdoc}
+     */
+    public $format = 'H:i:sO';
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getName() {
-		return self::TIME . 'tz';
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getName() {
+        return self::TIME . 'tz';
+    }
 
 }

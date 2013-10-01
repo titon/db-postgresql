@@ -1,26 +1,26 @@
 {
-	"name": "titon/model-postgresql",
-	"type": "library",
-	"description": "Provides PostgreSQL database access for the Titon Model package.",
-	"keywords": ["titon", "model", "driver", "postgresql", "pgsql", "pdo", "database"],
-	"homepage": "http://titon.io",
-	"license": "BSD-2",
-	"authors": [
-		{
-			"name": "Miles Johnson",
-			"homepage": "http://milesj.me"
-		}
-	],
-	"require": {
-		"php": ">=5.4.0",
-		"ext-pdo_pgsql": "*",
-		"titon/model": "*"
-	},
-	"require-dev": {
-		"titon/test": "*",
-		"titon/cache": "*"
-	},
-	"autoload": {
-		"psr-0": { "Titon\\Model\\Pgsql": "src/" }
-	}
+    "name": "titon/model-postgresql",
+    "type": "library",
+    "description": "Provides PostgreSQL database access for the Titon Model package.",
+    "keywords": ["titon", "model", "driver", "postgresql", "pgsql", "pdo", "database"],
+    "homepage": "http://titon.io",
+    "license": "BSD-2",
+    "authors": [
+        {
+            "name": "Miles Johnson",
+            "homepage": "http://milesj.me"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "ext-pdo_pgsql": "*",
+        "titon/model": "*"
+    },
+    "require-dev": {
+        "titon/test": "*",
+        "titon/cache": "*"
+    },
+    "autoload": {
+        "psr-0": { "Titon\\Model\\Pgsql": "src/" }
+    }
 }
