@@ -25,7 +25,7 @@ $db = [
     'database' => 'titon_test',
     'host' => '127.0.0.1',
     'user' => 'postgres',
-    'pass' => 'test123'
+    'pass' => ''
 ];
 
 Titon\Common\Config::set('db', $db);
