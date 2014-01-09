@@ -5,18 +5,16 @@
  * @link        http://titon.io
  */
 
-namespace Titon\Model\Sqlite;
+namespace Titon\Db\Pgsql;
 
 use Titon\Common\Config;
-use Titon\Common\Registry;
-use Titon\Model\Pgsql\PgsqlDriver;
-use Titon\Test\Stub\Model\Stat;
-use Titon\Test\Stub\Model\User;
+use Titon\Test\Stub\Table\Stat;
+use Titon\Test\Stub\Table\User;
 
 /**
  * Test class for driver specific testing.
  */
-class DriverTest extends \Titon\Model\Driver\PdoDriverTest {
+class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
 
     /**
      * This method is called before a test is executed.
@@ -25,7 +23,7 @@ class DriverTest extends \Titon\Model\Driver\PdoDriverTest {
         $this->object = new PgsqlDriver('default', Config::get('db'));
         $this->object->connect();
 
-        $this->model = new User();
+        $this->table = new User();
     }
 
     /**
@@ -101,7 +99,7 @@ class DriverTest extends \Titon\Model\Driver\PdoDriverTest {
                 'null' => true,
                 'default' => null
             ],
-        ], $user->getDriver()->describeTable($user->getTable()));
+        ], $user->getDriver()->describeTable($user->getTableName()));
 
         $stat = new Stat();
         $this->assertEquals([
@@ -162,7 +160,7 @@ class DriverTest extends \Titon\Model\Driver\PdoDriverTest {
                 'length' => '',
                 'null' => true
             ],
-        ], $user->getDriver()->describeTable($stat->getTable()));
+        ], $user->getDriver()->describeTable($stat->getTableName()));
     }
 
     /**

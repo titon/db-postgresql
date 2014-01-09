@@ -5,14 +5,14 @@
  * @link        http://titon.io
  */
 
-namespace Titon\Model\Pgsql\Type;
+namespace Titon\Db\Pgsql\Type;
 
 /**
  * Reset the options for PostgreSQL specific serial type.
  *
- * @package Titon\Model\Pgsql\Type
+ * @package Titon\Db\Pgsql\Type
  */
-class SerialType extends \Titon\Model\Driver\Type\SerialType {
+class SerialType extends \Titon\Db\Driver\Type\SerialType {
 
     /**
      * {@inheritdoc}

@@ -5,16 +5,16 @@
  * @link        http://titon.io
  */
 
-namespace Titon\Model\Pgsql;
+namespace Titon\Db\Pgsql;
 
-use Titon\Model\Driver\AbstractPdoDriver;
-use Titon\Model\Driver\Type\AbstractType;
-use Titon\Model\Model;
+use Titon\Db\Driver\AbstractPdoDriver;
+use Titon\Db\Driver\Type\AbstractType;
+use Titon\Db\Table;
 
 /**
  * A driver that represents the PostgreSQL database and uses PDO.
  *
- * @package Titon\Model\Pgsql
+ * @package Titon\Db\Pgsql
  */
 class PgsqlDriver extends AbstractPdoDriver {
 
@@ -35,7 +35,7 @@ class PgsqlDriver extends AbstractPdoDriver {
     /**
      * {@inheritdoc}
      *
-     * @uses Titon\Model\Type\AbstractType
+     * @uses Titon\Db\Type\AbstractType
      */
     public function describeTable($table) {
         return $this->cache([__METHOD__, $table], function() use ($table) {
@@ -122,8 +122,8 @@ class PgsqlDriver extends AbstractPdoDriver {
     /**
      * {@inheritdoc}
      */
-    public function getLastInsertID(Model $model) {
-        return $this->getConnection()->lastInsertId($model->getTable() . '_' . $model->getPrimaryKey() . '_seq');
+    public function getLastInsertID(Table $table) {
+        return $this->getConnection()->lastInsertId($table->getTableName() . '_' . $table->getPrimaryKey() . '_seq');
     }
 
     /**
@@ -132,59 +132,59 @@ class PgsqlDriver extends AbstractPdoDriver {
     public function getSupportedTypes() {
         // TODO
         return [
-            'bigint' => 'Titon\Model\Driver\Type\BigintType',
-            'int8' => 'Titon\Model\Driver\Type\BigintType',
-            'bigserial' => 'Titon\Model\Pgsql\Type\SerialType',
-            'serial8' => 'Titon\Model\Pgsql\Type\SerialType',
-            'bit' => 'Titon\Model\Driver\Type\BinaryType',
-            'bit varying' => 'Titon\Model\Driver\Type\BinaryType',
-            'varbit' => 'Titon\Model\Driver\Type\BinaryType',
-            'bool' => 'Titon\Model\Driver\Type\BooleanType',
-            'boolean' => 'Titon\Model\Driver\Type\BooleanType',
+            'bigint' => 'Titon\Db\Driver\Type\BigintType',
+            'int8' => 'Titon\Db\Driver\Type\BigintType',
+            'bigserial' => 'Titon\Db\Pgsql\Type\SerialType',
+            'serial8' => 'Titon\Db\Pgsql\Type\SerialType',
+            'bit' => 'Titon\Db\Driver\Type\BinaryType',
+            'bit varying' => 'Titon\Db\Driver\Type\BinaryType',
+            'varbit' => 'Titon\Db\Driver\Type\BinaryType',
+            'bool' => 'Titon\Db\Driver\Type\BooleanType',
+            'boolean' => 'Titon\Db\Driver\Type\BooleanType',
             // box
-            'bytea' => 'Titon\Model\Driver\Type\BlobType',
-            'char' => 'Titon\Model\Driver\Type\CharType',
-            'character' => 'Titon\Model\Driver\Type\CharType',
-            'character varying' => 'Titon\Model\Driver\Type\StringType',
-            'varchar' => 'Titon\Model\Driver\Type\StringType',
-            'cidr' => 'Titon\Model\Driver\Type\StringType',
+            'bytea' => 'Titon\Db\Driver\Type\BlobType',
+            'char' => 'Titon\Db\Driver\Type\CharType',
+            'character' => 'Titon\Db\Driver\Type\CharType',
+            'character varying' => 'Titon\Db\Driver\Type\StringType',
+            'varchar' => 'Titon\Db\Driver\Type\StringType',
+            'cidr' => 'Titon\Db\Driver\Type\StringType',
             // circle
-            'date' => 'Titon\Model\Driver\Type\DateType',
-            'double precision' => 'Titon\Model\Driver\Type\DoubleType',
-            'float8' => 'Titon\Model\Driver\Type\DoubleType',
-            'inet' => 'Titon\Model\Driver\Type\StringType',
-            'int' => 'Titon\Model\Driver\Type\IntType',
-            'int4' => 'Titon\Model\Driver\Type\IntType',
-            'integer' => 'Titon\Model\Driver\Type\IntType',
+            'date' => 'Titon\Db\Driver\Type\DateType',
+            'double precision' => 'Titon\Db\Driver\Type\DoubleType',
+            'float8' => 'Titon\Db\Driver\Type\DoubleType',
+            'inet' => 'Titon\Db\Driver\Type\StringType',
+            'int' => 'Titon\Db\Driver\Type\IntType',
+            'int4' => 'Titon\Db\Driver\Type\IntType',
+            'integer' => 'Titon\Db\Driver\Type\IntType',
             // interval
             // line
             // lseg
-            'macaddr' => 'Titon\Model\Driver\Type\StringType',
-            'money' => 'Titon\Model\Driver\Type\DecimalType',
-            'numeric' => 'Titon\Model\Driver\Type\DecimalType',
-            'decimal' => 'Titon\Model\Driver\Type\DecimalType',
+            'macaddr' => 'Titon\Db\Driver\Type\StringType',
+            'money' => 'Titon\Db\Driver\Type\DecimalType',
+            'numeric' => 'Titon\Db\Driver\Type\DecimalType',
+            'decimal' => 'Titon\Db\Driver\Type\DecimalType',
             // path
             // point
             // polygon
-            'real' => 'Titon\Model\Driver\Type\FloatType',
-            'float4' => 'Titon\Model\Driver\Type\FloatType',
-            'smallint' => 'Titon\Model\Driver\Type\IntType',
-            'int2' => 'Titon\Model\Driver\Type\IntType',
-            'smallserial' => 'Titon\Model\Pgsql\Type\SerialType',
-            'serial2' => 'Titon\Model\Pgsql\Type\SerialType',
-            'serial' => 'Titon\Model\Pgsql\Type\SerialType',
-            'serial4' => 'Titon\Model\Pgsql\Type\SerialType',
-            'text' => 'Titon\Model\Driver\Type\TextType',
-            'time' => 'Titon\Model\Driver\Type\TimeType',
-            'time without time zone' => 'Titon\Model\Driver\Type\TimeType',
-            'time with time zone' => 'Titon\Model\Pgsql\Type\TimeTzType',
-            'timestamp' => 'Titon\Model\Driver\Type\DatetimeType',
-            'timestamp without time zone' => 'Titon\Model\Driver\Type\DatetimeType',
-            'timestamp with time zone' => 'Titon\Model\Pgsql\Type\DatetimeTzType',
+            'real' => 'Titon\Db\Driver\Type\FloatType',
+            'float4' => 'Titon\Db\Driver\Type\FloatType',
+            'smallint' => 'Titon\Db\Driver\Type\IntType',
+            'int2' => 'Titon\Db\Driver\Type\IntType',
+            'smallserial' => 'Titon\Db\Pgsql\Type\SerialType',
+            'serial2' => 'Titon\Db\Pgsql\Type\SerialType',
+            'serial' => 'Titon\Db\Pgsql\Type\SerialType',
+            'serial4' => 'Titon\Db\Pgsql\Type\SerialType',
+            'text' => 'Titon\Db\Driver\Type\TextType',
+            'time' => 'Titon\Db\Driver\Type\TimeType',
+            'time without time zone' => 'Titon\Db\Driver\Type\TimeType',
+            'time with time zone' => 'Titon\Db\Pgsql\Type\TimeTzType',
+            'timestamp' => 'Titon\Db\Driver\Type\DatetimeType',
+            'timestamp without time zone' => 'Titon\Db\Driver\Type\DatetimeType',
+            'timestamp with time zone' => 'Titon\Db\Pgsql\Type\DatetimeTzType',
             // tsquery
             // tsvector
             // txid_snapshot
-            'uuid' => 'Titon\Model\Driver\Type\StringType',
+            'uuid' => 'Titon\Db\Driver\Type\StringType',
             // xml
             // json
             // array

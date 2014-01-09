@@ -5,10 +5,9 @@
  * @link        http://titon.io
  */
 
-namespace Titon\Model\Pgsql;
+namespace Titon\Db\Pgsql;
 
-use Titon\Model\Data\AbstractUpdateTest;
-use Titon\Test\Stub\Model\Stat;
+use Titon\Db\Data\AbstractUpdateTest;
 
 /**
  * Test class for database updating.

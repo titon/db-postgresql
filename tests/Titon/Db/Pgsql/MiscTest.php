@@ -5,11 +5,11 @@
  * @link        http://titon.io
  */
 
-namespace Titon\Model\Pgsql;
+namespace Titon\Db\Pgsql;
 
-use Titon\Model\Data\AbstractMiscTest;
-use Titon\Model\Query;
-use Titon\Test\Stub\Model\User;
+use Titon\Db\Data\AbstractMiscTest;
+use Titon\Db\Query;
+use Titon\Test\Stub\Table\User;
 
 /**
  * Test class for misc database functionality.
@@ -22,7 +22,7 @@ class MiscTest extends AbstractMiscTest {
     public function testCreateDropTable() {
         $user = new User();
 
-        $sql = sprintf("SELECT COUNT(table_name) FROM information_schema.tables WHERE table_catalog = 'titon_test' AND table_name = '%s';", $user->getTable());
+        $sql = sprintf("SELECT COUNT(table_name) FROM information_schema.tables WHERE table_catalog = 'titon_test' AND table_name = '%s';", $user->getTableName());
 
         $this->assertEquals(0, $user->getDriver()->query($sql)->count());
 

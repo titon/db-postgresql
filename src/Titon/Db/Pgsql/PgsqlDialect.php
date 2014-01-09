@@ -5,20 +5,20 @@
  * @link        http://titon.io
  */
 
-namespace Titon\Model\Pgsql;
+namespace Titon\Db\Pgsql;
 
-use Titon\Model\Driver\Dialect\AbstractPdoDialect;
-use Titon\Model\Driver\Schema;
-use Titon\Model\Driver\Type\AbstractType;
-use Titon\Model\Query;
-use Titon\Model\Query\Expr;
-use Titon\Model\Query\Func;
-use Titon\Model\Query\SubQuery;
+use Titon\Db\Driver\Dialect\AbstractPdoDialect;
+use Titon\Db\Driver\Schema;
+use Titon\Db\Driver\Type\AbstractType;
+use Titon\Db\Query;
+use Titon\Db\Query\Expr;
+use Titon\Db\Query\Func;
+use Titon\Db\Query\SubQuery;
 
 /**
  * Inherit the default dialect rules and override for PostgreSQL specific syntax.
  *
- * @package Titon\Model\Pgsql
+ * @package Titon\Db\Pgsql
  */
 class PgsqlDialect extends AbstractPdoDialect {
 

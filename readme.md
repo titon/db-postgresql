@@ -1,10 +1,10 @@
-# Model.PostgreSQL v0.1.3 [![Build Status](https://travis-ci.org/titon/model-postgresql.png)](https://travis-ci.org/titon/model-postgresql) #
+# DB\PostgreSQL v0.1.3 [![Build Status](https://travis-ci.org/titon/db-postgresql.png)](https://travis-ci.org/titon/db-postgresql) #
 
-Provides PostgreSQL access for the Titon Model package.
+Provides PostgreSQL access for the Titon database package.
 
 ### Dependencies ###
 
-* `Model`
+* `DB`
 
 ### Requirements ###
 

@@ -5,14 +5,14 @@
  * @link        http://titon.io
  */
 
-namespace Titon\Model\Pgsql\Type;
+namespace Titon\Db\Pgsql\Type;
 
 /**
  * Represents a timestamp with a time zone.
  *
- * @package Titon\Model\Pgsql\Type
+ * @package Titon\Db\Pgsql\Type
  */
-class DatetimeTzType extends \Titon\Model\Driver\Type\DatetimeType {
+class DatetimeTzType extends \Titon\Db\Driver\Type\DatetimeType {
 
     /**
      * {@inheritdoc}

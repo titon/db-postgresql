@@ -5,9 +5,9 @@
  * @link        http://titon.io
  */
 
-namespace Titon\Model\Pgsql;
+namespace Titon\Db\Pgsql;
 
-use Titon\Model\Data\AbstractDeleteTest;
+use Titon\Db\Data\AbstractDeleteTest;
 
 /**
  * Test class for database record deleting.

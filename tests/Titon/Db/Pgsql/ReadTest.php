@@ -5,16 +5,16 @@
  * @link        http://titon.io
  */
 
-namespace Titon\Model\Pgsql;
+namespace Titon\Db\Pgsql;
 
-use Titon\Model\Data\AbstractReadTest;
-use Titon\Model\Entity;
-use Titon\Model\Query\Func;
-use Titon\Model\Query;
-use Titon\Test\Stub\Model\Book;
-use Titon\Test\Stub\Model\Order;
-use Titon\Test\Stub\Model\Stat;
-use Titon\Test\Stub\Model\User;
+use Titon\Db\Data\AbstractReadTest;
+use Titon\Db\Entity;
+use Titon\Db\Query\Func;
+use Titon\Db\Query;
+use Titon\Test\Stub\Table\Book;
+use Titon\Test\Stub\Table\Order;
+use Titon\Test\Stub\Table\Stat;
+use Titon\Test\Stub\Table\User;
 
 /**
  * Test class for database reading.
