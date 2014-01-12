@@ -39,7 +39,7 @@ class PgsqlDriver extends AbstractPdoDriver {
      */
     public function describeTable($table) {
         return $this->cache([__METHOD__, $table], function() use ($table) {
-            $columns = $this->query('SELECT * FROM information_schema.columns WHERE table_catalog = ? AND table_schema = \'public\' AND table_name = ?;', [$this->getDatabase(), $table])->fetchAll(false);
+            $columns = $this->query('SELECT * FROM information_schema.columns WHERE table_catalog = ? AND table_schema = \'public\' AND table_name = ?;', [$this->getDatabase(), $table])->find();
             $schema = [];
 
             if (!$columns) {
@@ -205,7 +205,7 @@ class PgsqlDriver extends AbstractPdoDriver {
         $database = $database ?: $this->getDatabase();
 
         return $this->cache([__METHOD__, $database], function() use ($database) {
-            $tables = $this->query('SELECT * FROM information_schema.tables WHERE table_schema = \'public\' AND table_catalog = ?;', [$database])->fetchAll(false);
+            $tables = $this->query('SELECT * FROM information_schema.tables WHERE table_schema = \'public\' AND table_catalog = ?;', [$database])->find();
             $schema = [];
 
             if (!$tables) {
