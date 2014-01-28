@@ -12,10 +12,10 @@ use Titon\Db\Entity;
 use Titon\Db\Query\Func;
 use Titon\Db\Query;
 use Titon\Db\Query\Predicate;
-use Titon\Test\Stub\Table\Book;
-use Titon\Test\Stub\Table\Order;
-use Titon\Test\Stub\Table\Stat;
-use Titon\Test\Stub\Table\User;
+use Titon\Test\Stub\Repository\Book;
+use Titon\Test\Stub\Repository\Order;
+use Titon\Test\Stub\Repository\Stat;
+use Titon\Test\Stub\Repository\User;
 
 /**
  * Test class for database reading.

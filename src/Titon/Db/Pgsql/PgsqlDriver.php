@@ -9,7 +9,7 @@ namespace Titon\Db\Pgsql;
 
 use Titon\Db\Driver\AbstractPdoDriver;
 use Titon\Db\Driver\Type\AbstractType;
-use Titon\Db\Table;
+use Titon\Db\Repository;
 
 /**
  * A driver that represents the PostgreSQL database and uses PDO.
@@ -122,8 +122,8 @@ class PgsqlDriver extends AbstractPdoDriver {
     /**
      * {@inheritdoc}
      */
-    public function getLastInsertID(Table $table) {
-        return $this->getConnection()->lastInsertId($table->getTableName() . '_' . $table->getPrimaryKey() . '_seq');
+    public function getLastInsertID(Repository $table) {
+        return $this->getConnection()->lastInsertId($table->getTable() . '_' . $table->getPrimaryKey() . '_seq');
     }
 
     /**

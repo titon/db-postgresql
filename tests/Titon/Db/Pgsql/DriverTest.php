@@ -8,8 +8,8 @@
 namespace Titon\Db\Pgsql;
 
 use Titon\Common\Config;
-use Titon\Test\Stub\Table\Stat;
-use Titon\Test\Stub\Table\User;
+use Titon\Test\Stub\Repository\Stat;
+use Titon\Test\Stub\Repository\User;
 
 /**
  * Test class for driver specific testing.
@@ -99,7 +99,7 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
                 'null' => true,
                 'default' => null
             ],
-        ], $user->getDriver()->describeTable($user->getTableName()));
+        ], $user->getDriver()->describeTable($user->getTable()));
 
         $stat = new Stat();
         $this->assertEquals([
@@ -160,7 +160,7 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
                 'length' => '',
                 'null' => true
             ],
-        ], $user->getDriver()->describeTable($stat->getTableName()));
+        ], $user->getDriver()->describeTable($stat->getTable()));
     }
 
     /**
