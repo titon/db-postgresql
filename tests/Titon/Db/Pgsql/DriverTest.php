@@ -7,7 +7,9 @@
 
 namespace Titon\Db\Pgsql;
 
+use PDO;
 use Titon\Common\Config;
+use Titon\Db\Query;
 use Titon\Test\Stub\Repository\Stat;
 use Titon\Test\Stub\Repository\User;
 
@@ -171,6 +173,64 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
 
         $this->object->config->dsn = 'custom:dsn';
         $this->assertEquals('custom:dsn', $this->object->getDsn());
+    }
+
+    /**
+     * Test that query params are resolved for binds.
+     * Should be in correct order.
+     */
+    public function testResolveParams() {
+        $query1 = new Query(Query::SELECT, $this->table);
+        $query1->where('id', 1)->where(function() {
+            $this->like('name', 'Titon')->in('size', [1, 2, 3]);
+        });
+
+        $this->assertEquals([
+            [1, PDO::PARAM_STR],
+            ['Titon', PDO::PARAM_STR],
+            [1, PDO::PARAM_INT],
+            [2, PDO::PARAM_INT],
+            [3, PDO::PARAM_INT],
+        ], $this->object->resolveParams($query1));
+
+        // Include fields
+        $query2 = new Query(Query::UPDATE, $this->table);
+        $query2->fields([
+            'username' => 'miles',
+            'age' => 26
+        ])->where('id', 666);
+
+        $this->assertEquals([
+            ['miles', PDO::PARAM_STR],
+            [26, PDO::PARAM_INT],
+            [666, PDO::PARAM_STR],
+        ], $this->object->resolveParams($query2));
+
+        // All at once!
+        $query3 = new Query(Query::UPDATE, $this->table);
+        $query3->fields([
+            'username' => 'miles',
+            'age' => 26
+        ])->orWhere(function() {
+            $this
+                ->in('id', [4, 5, 6])
+                ->also(function() {
+                    $this->eq('status', true)->notEq('email', 'email@domain.com');
+                })
+                ->between('age', 30, 50);
+        });
+
+        $this->assertEquals([
+            ['miles', PDO::PARAM_STR],
+            [26, PDO::PARAM_INT],
+            [4, PDO::PARAM_STR],
+            [5, PDO::PARAM_STR],
+            [6, PDO::PARAM_STR],
+            [true, PDO::PARAM_BOOL],
+            ['email@domain.com', PDO::PARAM_STR],
+            [30, PDO::PARAM_INT],
+            [50, PDO::PARAM_INT],
+        ], $this->object->resolveParams($query3));
     }
 
 }
