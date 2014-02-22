@@ -9,6 +9,7 @@ namespace Titon\Db\Pgsql;
 
 use Titon\Db\Data\AbstractReadTest;
 use Titon\Db\Entity;
+use Titon\Db\EntityCollection;
 use Titon\Db\Query\Func;
 use Titon\Db\Query;
 use Titon\Db\Query\Predicate;
@@ -21,6 +22,40 @@ use Titon\Test\Stub\Repository\User;
  * Test class for database reading.
  */
 class ReadTest extends AbstractReadTest {
+
+    /**
+     * Test expressions in select statements.
+     */
+    public function testSelectRawExpression() {
+        $this->loadFixtures('Stats');
+
+        $stat = new Stat();
+
+        // In place of expr()
+        $query = $stat->select();
+        $query->fields([
+            'name AS role',
+            Query::raw('"name" AS "class"')
+        ]);
+
+        $this->assertEquals(new EntityCollection([
+            new Entity(['role' => 'Warrior', 'class' => 'Warrior']),
+            new Entity(['role' => 'Ranger', 'class' => 'Ranger']),
+            new Entity(['role' => 'Mage', 'class' => 'Mage']),
+        ]), $query->all());
+
+        // In place of func()
+        $query = $stat->select();
+        $query->fields([
+            Query::raw('SUBSTR("name", 1, 3) as "shortName"')
+        ]);
+
+        $this->assertEquals(new EntityCollection([
+            new Entity(['shortName' => 'War']),
+            new Entity(['shortName' => 'Ran']),
+            new Entity(['shortName' => 'Mag']),
+        ]), $query->all());
+    }
 
     /**
      * Test functions in select statements.
@@ -36,7 +71,7 @@ class ReadTest extends AbstractReadTest {
             $query->func('SUM', ['health' => Func::FIELD])->asAlias('sum')
         ]);
 
-        $this->assertEquals(new Entity(['sum' => 2900]), $query->fetch());
+        $this->assertEquals(new Entity(['sum' => 2900]), $query->first());
 
         // SUBSTRING
         $query = $stat->select();
@@ -44,11 +79,11 @@ class ReadTest extends AbstractReadTest {
             $query->func('SUBSTR', ['name' => Func::FIELD, 1, 3])->asAlias('shortName')
         ]);
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['shortName' => 'War']),
             new Entity(['shortName' => 'Ran']),
             new Entity(['shortName' => 'Mag']),
-        ], $query->fetchAll());
+        ]), $query->all());
     }
 
     /**
@@ -78,7 +113,7 @@ class ReadTest extends AbstractReadTest {
 
         $book = new Book();
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['id' => 15, 'series_id' => 3, 'name' => 'The Return of the King']),
             new Entity(['id' => 14, 'series_id' => 3, 'name' => 'The Two Towers']),
             new Entity(['id' => 13, 'series_id' => 3, 'name' => 'The Fellowship of the Ring']),
@@ -94,12 +129,12 @@ class ReadTest extends AbstractReadTest {
             new Entity(['id' => 3, 'series_id' => 1, 'name' => 'A Storm of Swords']),
             new Entity(['id' => 2, 'series_id' => 1, 'name' => 'A Clash of Kings']),
             new Entity(['id' => 1, 'series_id' => 1, 'name' => 'A Game of Thrones']),
-        ], $book->select('id', 'series_id', 'name')->orderBy([
+        ]), $book->select('id', 'series_id', 'name')->orderBy([
             'series_id' => 'desc',
             'id' => 'desc'
-        ])->fetchAll());
+        ])->all());
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['id' => 13, 'series_id' => 3, 'name' => 'The Fellowship of the Ring']),
             new Entity(['id' => 15, 'series_id' => 3, 'name' => 'The Return of the King']),
             new Entity(['id' => 14, 'series_id' => 3, 'name' => 'The Two Towers']),
@@ -115,10 +150,10 @@ class ReadTest extends AbstractReadTest {
             new Entity(['id' => 4, 'series_id' => 1, 'name' => 'A Feast for Crows']),
             new Entity(['id' => 1, 'series_id' => 1, 'name' => 'A Game of Thrones']),
             new Entity(['id' => 3, 'series_id' => 1, 'name' => 'A Storm of Swords']),
-        ], $book->select('id', 'series_id', 'name')->orderBy([
+        ]), $book->select('id', 'series_id', 'name')->orderBy([
             'series_id' => 'desc',
             'name' => 'asc'
-        ])->fetchAll());
+        ])->all());
     }
 
     /**
@@ -141,11 +176,11 @@ class ReadTest extends AbstractReadTest {
                 return sprintf($dialect->getClause(PgsqlDialect::DISTINCT_ON), $dialect->quote('series_id'));
             });
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['id' => 1, 'name' => 'A Game of Thrones']),
             new Entity(['id' => 6, 'name' => 'Harry Potter and the Philosopher\'s Stone']),
             new Entity(['id' => 13, 'name' => 'The Fellowship of the Ring'])
-        ], $query->fetchAll());
+        ]), $query->all());
     }
 
     /**
@@ -172,23 +207,23 @@ class ReadTest extends AbstractReadTest {
             });
 
         // Since PgSQL uses distinct, the qty/count values are different
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['id' => 1, 'user_id' => 1, 'quantity' => 15, 'status' => 'pending', 'shipped' => null, 'qty' => 15, 'count' => 1]),
             new Entity(['id' => 2, 'user_id' => 2, 'quantity' => 33, 'status' => 'pending', 'shipped' => null, 'qty' => 33, 'count' => 1]),
             new Entity(['id' => 3, 'user_id' => 3, 'quantity' => 4, 'status' => 'pending', 'shipped' => null, 'qty' => 4, 'count' => 1]),
             new Entity(['id' => 4, 'user_id' => 4, 'quantity' => 24, 'status' => 'pending', 'shipped' => null, 'qty' => 24, 'count' => 1]),
             new Entity(['id' => 5, 'user_id' => 5, 'quantity' => 29, 'status' => 'pending', 'shipped' => null, 'qty' => 29, 'count' => 1]),
-        ], $query->fetchAll());
+        ]), $query->all());
 
         // It also doesn't support aliases in having, so re-SUM
         $query->having($query->func('SUM', ['quantity' => 'field']), '>', 25);
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['id' => 11, 'user_id' => 1, 'quantity' => 33, 'status' => 'pending', 'shipped' => null, 'qty' => 33, 'count' => 1]),
             new Entity(['id' => 2, 'user_id' => 2, 'quantity' => 33, 'status' => 'pending', 'shipped' => null, 'qty' => 33, 'count' => 1]),
             new Entity(['id' => 12, 'user_id' => 4, 'quantity' => 26, 'status' => 'pending', 'shipped' => null, 'qty' => 26, 'count' => 1]),
             new Entity(['id' => 5, 'user_id' => 5, 'quantity' => 29, 'status' => 'pending', 'shipped' => null, 'qty' => 29, 'count' => 1]),
-        ], $query->fetchAll());
+        ]), $query->all());
     }
 
     /**
@@ -214,32 +249,32 @@ class ReadTest extends AbstractReadTest {
                 return sprintf($dialect->getClause(PgsqlDialect::DISTINCT_ON), $dialect->quote('user_id'));
             });
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['id' => 1, 'user_id' => 1, 'quantity' => 15, 'status' => 'pending', 'shipped' => null, 'qty' => 15, 'count' => 1]),
             new Entity(['id' => 2, 'user_id' => 2, 'quantity' => 33, 'status' => 'pending', 'shipped' => null, 'qty' => 33, 'count' => 1]),
             new Entity(['id' => 3, 'user_id' => 3, 'quantity' => 4, 'status' => 'pending', 'shipped' => null, 'qty' => 4, 'count' => 1]),
             new Entity(['id' => 4, 'user_id' => 4, 'quantity' => 24, 'status' => 'pending', 'shipped' => null, 'qty' => 24, 'count' => 1]),
             new Entity(['id' => 5, 'user_id' => 5, 'quantity' => 29, 'status' => 'pending', 'shipped' => null, 'qty' => 29, 'count' => 1]),
-        ], $query->fetchAll());
+        ]), $query->all());
 
         $query->orHaving('status', '=', 'delivered');
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['id' => 21, 'user_id' => 1, 'quantity' => 17, 'status' => 'delivered', 'shipped' => '2013-05-27 12:33:02', 'qty' => 17, 'count' => 1]),
             new Entity(['id' => 28, 'user_id' => 3, 'quantity' => 13, 'status' => 'delivered', 'shipped' => '2013-06-03 12:33:02', 'qty' => 13, 'count' => 1]),
             new Entity(['id' => 19, 'user_id' => 4, 'quantity' => 20, 'status' => 'delivered', 'shipped' => '2013-06-30 12:33:02', 'qty' => 20, 'count' => 1]),
             new Entity(['id' => 20, 'user_id' => 5, 'quantity' => 18, 'status' => 'delivered', 'shipped' => '2013-06-30 12:33:02', 'qty' => 18, 'count' => 1]),
-        ], $query->fetchAll());
+        ]), $query->all());
 
         $query->orHaving('status', '=', 'shipped');
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['id' => 21, 'user_id' => 1, 'quantity' => 17, 'status' => 'delivered', 'shipped' => '2013-05-27 12:33:02', 'qty' => 17, 'count' => 1]),
             new Entity(['id' => 17, 'user_id' => 2, 'quantity' => 26, 'status' => 'shipped', 'shipped' => '2013-06-28 12:33:02', 'qty' => 26, 'count' => 1]),
             new Entity(['id' => 18, 'user_id' => 3, 'quantity' => 23, 'status' => 'shipped', 'shipped' => '2013-06-29 12:33:02', 'qty' => 23, 'count' => 1]),
             new Entity(['id' => 19, 'user_id' => 4, 'quantity' => 20, 'status' => 'delivered', 'shipped' => '2013-06-30 12:33:02', 'qty' => 20, 'count' => 1]),
             new Entity(['id' => 16, 'user_id' => 5, 'quantity' => 33, 'status' => 'shipped', 'shipped' => '2013-06-27 12:33:02', 'qty' => 33, 'count' => 1]),
-        ], $query->fetchAll());
+        ]), $query->all());
     }
 
     /**
@@ -266,22 +301,22 @@ class ReadTest extends AbstractReadTest {
                 return sprintf($dialect->getClause(PgsqlDialect::DISTINCT_ON), $dialect->quote('user_id'));
             })
             ->having(function(Predicate $pred, Query $query) {
-                $this->between($query->func('SUM', ['quantity' => 'field']), 20, 30);
-                $this->either(function() {
-                    $this->eq('status', 'shipped');
-                    $this->eq('status', 'delivered');
+                $pred->between($query->func('SUM', ['quantity' => 'field']), 20, 30);
+                $pred->either(function(Predicate $pred2) {
+                    $pred2->eq('status', 'shipped');
+                    $pred2->eq('status', 'delivered');
                 });
             });
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['id' => 17, 'user_id' => 2, 'quantity' => 26, 'status' => 'shipped', 'shipped' => '2013-06-28 12:33:02', 'qty' => 26, 'count' => 1]),
             new Entity(['id' => 18, 'user_id' => 3, 'quantity' => 23, 'status' => 'shipped', 'shipped' => '2013-06-29 12:33:02', 'qty' => 23, 'count' => 1]),
             new Entity(['id' => 19, 'user_id' => 4, 'quantity' => 20, 'status' => 'delivered', 'shipped' => '2013-06-30 12:33:02', 'qty' => 20, 'count' => 1]),
-        ], $query->fetchAll());
+        ]), $query->all());
     }
 
     /**
-     * Test that right join fetches data.
+     * Test that right join firstes data.
      */
     public function testRightJoin() {
         $this->loadFixtures(['Users', 'Countries']);
@@ -294,7 +329,7 @@ class ReadTest extends AbstractReadTest {
             ->orderBy('User.id', 'asc');
 
         // PgSQL places nulls at the end
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity([
                 'id' => 1,
                 'username' => 'miles',
@@ -342,7 +377,51 @@ class ReadTest extends AbstractReadTest {
                     'iso' => 'AUS'
                 ])
             ]),
-        ], $query->fetchAll());
+        ]), $query->all());
+    }
+
+    /**
+     * Test unions merge multiple selects.
+     */
+    public function testUnions() {
+        $this->loadFixtures(['Users', 'Books', 'Authors']);
+
+        $user = new User();
+        $query = $user->select('username AS name');
+        $query->union($query->subQuery('name')->from('books')->where('series_id', 1));
+        $query->union($query->subQuery('name')->from('authors'));
+
+        // PGSQL returns them in a different order by default
+        $this->assertEquals(new EntityCollection([
+            new Entity(['name' => 'spiderman']),
+            new Entity(['name' => 'J. R. R. Tolkien']),
+            new Entity(['name' => 'wolverine']),
+            new Entity(['name' => 'A Feast for Crows']),
+            new Entity(['name' => 'A Game of Thrones']),
+            new Entity(['name' => 'superman']),
+            new Entity(['name' => 'batman']),
+            new Entity(['name' => 'miles']),
+            new Entity(['name' => 'A Dance with Dragons']),
+            new Entity(['name' => 'A Storm of Swords']),
+            new Entity(['name' => 'J. K. Rowling']),
+            new Entity(['name' => 'A Clash of Kings']),
+            new Entity(['name' => 'George R. R. Martin']),
+        ]), $query->all());
+
+        $query->orderBy('name', 'desc')->limit(10);
+
+        $this->assertEquals(new EntityCollection([
+            new Entity(['name' => 'wolverine']),
+            new Entity(['name' => 'superman']),
+            new Entity(['name' => 'spiderman']),
+            new Entity(['name' => 'miles']),
+            new Entity(['name' => 'J. R. R. Tolkien']),
+            new Entity(['name' => 'J. K. Rowling']),
+            new Entity(['name' => 'George R. R. Martin']),
+            new Entity(['name' => 'batman']),
+            new Entity(['name' => 'A Storm of Swords']),
+            new Entity(['name' => 'A Game of Thrones']),
+        ]), $query->all());
     }
 
 }

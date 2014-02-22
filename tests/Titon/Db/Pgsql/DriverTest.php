@@ -22,7 +22,7 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
      * This method is called before a test is executed.
      */
     protected function setUp() {
-        $this->object = new PgsqlDriver('default', Config::get('db'));
+        $this->object = new PgsqlDriver(Config::get('db'));
         $this->object->connect();
 
         $this->table = new User();
@@ -171,7 +171,7 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
     public function testGetDsn() {
         $this->assertEquals('pgsql:dbname=titon_test;host=127.0.0.1;port=5432', $this->object->getDsn());
 
-        $this->object->config->dsn = 'custom:dsn';
+        $this->object->setConfig('dsn', 'custom:dsn');
         $this->assertEquals('custom:dsn', $this->object->getDsn());
     }
 
@@ -181,8 +181,8 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
      */
     public function testResolveParams() {
         $query1 = new Query(Query::SELECT, $this->table);
-        $query1->where('id', 1)->where(function() {
-            $this->like('name', 'Titon')->in('size', [1, 2, 3]);
+        $query1->where('id', 1)->where(function(Query\Predicate $where) {
+            $where->like('name', 'Titon')->in('size', [1, 2, 3]);
         });
 
         $this->assertEquals([
@@ -211,11 +211,11 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
         $query3->fields([
             'username' => 'miles',
             'age' => 26
-        ])->orWhere(function() {
-            $this
+        ])->orWhere(function(Query\Predicate $where) {
+            $where
                 ->in('id', [4, 5, 6])
-                ->also(function() {
-                    $this->eq('status', true)->notEq('email', 'email@domain.com');
+                ->also(function(Query\Predicate $where2) {
+                    $where2->eq('status', true)->notEq('email', 'email@domain.com');
                 })
                 ->between('age', 30, 50);
         });

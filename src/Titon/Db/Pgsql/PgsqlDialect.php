@@ -13,6 +13,7 @@ use Titon\Db\Driver\Type\AbstractType;
 use Titon\Db\Query;
 use Titon\Db\Query\Expr;
 use Titon\Db\Query\Func;
+use Titon\Db\Query\RawExpr;
 use Titon\Db\Query\SubQuery;
 
 /**
@@ -63,7 +64,7 @@ class PgsqlDialect extends AbstractPdoDialect {
      */
     protected $_statements = [
         Query::INSERT           => 'INSERT INTO {table} {fields} VALUES {values}',
-        Query::SELECT           => 'SELECT {a.distinct} {fields} FROM {table} {joins} {where} {groupBy} {having} {orderBy} {limit}',
+        Query::SELECT           => 'SELECT {a.distinct} {fields} FROM {table} {joins} {where} {groupBy} {having} {unions} {orderBy} {limit}',
         Query::UPDATE           => 'UPDATE {a.only} {table} SET {fields} {where}',
         Query::DELETE           => 'DELETE FROM {a.only} {table} {joins} {where}',
         Query::TRUNCATE         => 'TRUNCATE {a.only} {table} {a.identity} {a.action}',
@@ -217,8 +218,14 @@ class PgsqlDialect extends AbstractPdoDialect {
                 } else if ($field instanceof Expr) {
                     $columns[] = $this->formatExpression($field);
 
+                } else if ($field instanceof RawExpr) {
+                    $columns[] = $field->getValue();
+
                 } else if ($field instanceof SubQuery) {
                     $columns[] = $this->formatSubQuery($field);
+
+                } else if (preg_match('/^(.*?)\s+AS\s+(.*?)$/i', $field, $matches)) {
+                    $columns[] = sprintf($this->getClause(self::AS_ALIAS), $alias . $this->quote($matches[1]), $this->quote($matches[2]));
 
                 // Alias the field since PgSQL doesn't support PDO::getColumnMeta()
                 } else if ($alias) {
