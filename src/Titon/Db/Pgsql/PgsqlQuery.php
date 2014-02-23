@@ -16,4 +16,22 @@ use Titon\Db\Query;
  */
 class PgsqlQuery extends Query {
 
+    /**
+     * Lock all rows using a shared lock instead of exclusive.
+     *
+     * @return $this
+     */
+    public function lockForShare() {
+        return $this->attribute('lock', PgsqlDialect::FOR_SHARE_LOCK);
+    }
+
+    /**
+     * Lock all rows returned from a select as if they were locked for update.
+     *
+     * @return $this
+     */
+    public function lockForUpdate() {
+        return $this->attribute('lock', PgsqlDialect::FOR_UPDATE_LOCK);
+    }
+
 }

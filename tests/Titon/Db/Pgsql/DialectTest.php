@@ -427,4 +427,17 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->assertEquals('"foo"."bar", "baz"', $this->object->quoteList(['foo.bar', '"baz"']));
     }
 
+    /**
+     * Test select locking types.
+     */
+    public function testSelectLocking() {
+        $query = new PgsqlQuery(Query::SELECT, new User());
+        $query->from('users')->where('name', 'like', '%miles%')->lockForShare();
+
+        $this->assertRegExp('/SELECT\s+\* FROM\s+"users"\s+WHERE "name" LIKE \?\s+FOR SHARE;/', $this->object->buildSelect($query));
+
+        $query->lockForUpdate();
+        $this->assertRegExp('/SELECT\s+\* FROM\s+"users"\s+WHERE "name" LIKE \?\s+FOR UPDATE;/', $this->object->buildSelect($query));
+    }
+
 }

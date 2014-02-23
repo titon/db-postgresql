@@ -28,6 +28,8 @@ class PgsqlDialect extends AbstractPdoDialect {
     const DELETE_ROWS = 'deleteRows';
     const DISTINCT_ON = 'distinctOn';
     const DROP = 'drop';
+    const FOR_UPDATE_LOCK = 'forUpdateLock';
+    const FOR_SHARE_LOCK = 'forShareLock';
     const INHERITS = 'inherits';
     const IS_GLOBAL = 'global';
     const LOCAL = 'local';
@@ -64,7 +66,7 @@ class PgsqlDialect extends AbstractPdoDialect {
      */
     protected $_statements = [
         Query::INSERT           => 'INSERT INTO {table} {fields} VALUES {values}',
-        Query::SELECT           => 'SELECT {a.distinct} {fields} FROM {table} {joins} {where} {groupBy} {having} {unions} {orderBy} {limit}',
+        Query::SELECT           => 'SELECT {a.distinct} {fields} FROM {table} {joins} {where} {groupBy} {having} {compounds} {orderBy} {limit} {a.lock}',
         Query::UPDATE           => 'UPDATE {a.only} {table} SET {fields} {where}',
         Query::DELETE           => 'DELETE FROM {a.only} {table} {joins} {where}',
         Query::TRUNCATE         => 'TRUNCATE {a.only} {table} {a.identity} {a.action}',
@@ -81,7 +83,8 @@ class PgsqlDialect extends AbstractPdoDialect {
      */
     protected $_attributes = [
         Query::SELECT => [
-            'distinct' => false
+            'distinct' => false,
+            'lock' => ''
         ],
         Query::UPDATE => [
             'only' => false
@@ -135,6 +138,8 @@ class PgsqlDialect extends AbstractPdoDialect {
             self::CONTINUE_IDENTITY => 'CONTINUE IDENTITY',
             self::DELETE_ROWS       => 'DELETE ROWS',
             self::DROP              => 'DROP',
+            self::FOR_SHARE_LOCK    => 'FOR SHARE',
+            self::FOR_UPDATE_LOCK   => 'FOR UPDATE',
             self::INHERITS          => 'INHERITS',
             self::IS_GLOBAL         => 'GLOBAL',
             self::LOCAL             => 'LOCAL',
