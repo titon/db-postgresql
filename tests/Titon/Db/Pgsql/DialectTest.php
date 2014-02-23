@@ -153,30 +153,6 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
     }
 
     /**
-     * Test select statements that contain joins.
-     */
-    public function testBuildSelectJoins() {
-        $user = new User();
-        $query = $user->select();
-        $query->rightJoin($user->getRelation('Profile'), []);
-
-        $this->assertRegExp('/SELECT\s+(`|\")?User(`|\")?.*, (`|\")?Profile(`|\")?.* FROM (`|\")?users(`|\")? AS (`|\")?User(`|\")? RIGHT JOIN (`|\")?profiles(`|\")? AS (`|\")?Profile(`|\")? ON (`|\")?User(`|\")?.(`|\")?id(`|\")? = (`|\")?Profile(`|\")?.(`|\")?user_id(`|\")?;/', $this->object->buildSelect($query));
-
-        // With fields
-        $query = $user->select('id', 'username');
-        $query->rightJoin($user->getRelation('Profile'), ['id', 'avatar', 'lastLogin']);
-
-        $this->assertRegExp('/SELECT\s+(`|\")?User(`|\")?.(`|\")?id(`|\")? AS User__id, (`|\")?User(`|\")?.(`|\")?username(`|\")? AS User__username, (`|\")?Profile(`|\")?.(`|\")?id(`|\")? AS Profile__id, (`|\")?Profile(`|\")?.(`|\")?avatar(`|\")? AS Profile__avatar, (`|\")?Profile(`|\")?.(`|\")?lastLogin(`|\")? AS Profile__lastLogin FROM (`|\")?users(`|\")? AS (`|\")?User(`|\")? RIGHT JOIN (`|\")?profiles(`|\")? AS (`|\")?Profile(`|\")? ON (`|\")?User(`|\")?.(`|\")?id(`|\")? = (`|\")?Profile(`|\")?.(`|\")?user_id(`|\")?;/', $this->object->buildSelect($query));
-
-        // Three joins
-        $query = $user->select('id');
-        $query->leftJoin('foo', ['id'], ['User.id' => 'foo.id']);
-        $query->outerJoin(['bar', 'Bar'], ['id'], ['User.bar_id' => 'Bar.id']);
-
-        $this->assertRegExp('/SELECT\s+(`|\")?User(`|\")?.(`|\")?id(`|\")? AS User__id, (`|\")?foo(`|\")?.(`|\")?id(`|\")? AS foo__id, (`|\")?Bar(`|\")?.(`|\")?id(`|\")? AS Bar__id FROM (`|\")?users(`|\")? AS (`|\")?User(`|\")? LEFT JOIN (`|\")?foo(`|\")? ON (`|\")?User(`|\")?.(`|\")?id(`|\")? = (`|\")?foo(`|\")?.(`|\")?id(`|\")? FULL OUTER JOIN (`|\")?bar(`|\")? AS (`|\")?Bar(`|\")? ON (`|\")?User(`|\")?.(`|\")?bar_id(`|\")? = (`|\")?Bar(`|\")?.(`|\")?id(`|\")?;/', $this->object->buildSelect($query));
-    }
-
-    /**
      * Test truncate table statement creation.
      */
     public function testBuildTruncate() {

@@ -11,10 +11,6 @@ use Titon\Db\Driver\Dialect\AbstractPdoDialect;
 use Titon\Db\Driver\Schema;
 use Titon\Db\Driver\Type\AbstractType;
 use Titon\Db\Query;
-use Titon\Db\Query\Expr;
-use Titon\Db\Query\Func;
-use Titon\Db\Query\RawExpr;
-use Titon\Db\Query\SubQuery;
 
 /**
  * Inherit the default dialect rules and override for PostgreSQL specific syntax.
@@ -56,7 +52,8 @@ class PgsqlDialect extends AbstractPdoDialect {
      * @type array
      */
     protected $_config = [
-        'quoteCharacter' => '"'
+        'quoteCharacter' => '"',
+        'virtualJoins' => true
     ];
 
     /**
@@ -204,45 +201,6 @@ class PgsqlDialect extends AbstractPdoDialect {
         }
 
         return implode(",\n", $columns);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function formatSelectFields(array $fields, $alias = null) {
-        $columns = [];
-
-        if (empty($fields)) {
-            $columns[] = ($alias ? $this->quote($alias) . '.' : '') . '*';
-
-        } else {
-            foreach ($fields as $field) {
-                if ($field instanceof Func) {
-                    $columns[] = $this->formatFunction($field);
-
-                } else if ($field instanceof Expr) {
-                    $columns[] = $this->formatExpression($field);
-
-                } else if ($field instanceof RawExpr) {
-                    $columns[] = $field->getValue();
-
-                } else if ($field instanceof SubQuery) {
-                    $columns[] = $this->formatSubQuery($field);
-
-                } else if (preg_match('/^(.*?)\s+AS\s+(.*?)$/i', $field, $matches)) {
-                    $columns[] = sprintf($this->getClause(self::AS_ALIAS), $alias . $this->quote($matches[1]), $this->quote($matches[2]));
-
-                // Alias the field since PgSQL doesn't support PDO::getColumnMeta()
-                } else if ($alias) {
-                    $columns[] = sprintf($this->getClause(self::AS_ALIAS), $this->quote($alias) . '.' . $this->quote($field), $alias . '__' . $field);
-
-                } else {
-                    $columns[] = $this->quote($field);
-                }
-            }
-        }
-
-        return $columns;
     }
 
 }
