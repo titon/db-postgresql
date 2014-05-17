@@ -7,20 +7,14 @@
 
 namespace Titon\Db\Pgsql;
 
-use PDO;
 use Titon\Common\Config;
 use Titon\Db\Query;
 use Titon\Test\Stub\Repository\Stat;
 use Titon\Test\Stub\Repository\User;
+use \PDO;
 
-/**
- * Test class for driver specific testing.
- */
 class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
 
-    /**
-     * This method is called before a test is executed.
-     */
     protected function setUp() {
         $this->object = new PgsqlDriver(Config::get('db'));
         $this->object->connect();
@@ -28,9 +22,6 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
         $this->table = new User();
     }
 
-    /**
-     * Test table inspecting.
-     */
     public function testDescribeTable() {
         $this->loadFixtures(['Users', 'Stats']);
 
@@ -165,9 +156,6 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
         ], $user->getDriver()->describeTable($stat->getTable()));
     }
 
-    /**
-     * Test DSN building.
-     */
     public function testGetDsn() {
         $this->assertEquals('pgsql:dbname=titon_test;host=127.0.0.1;port=5432', $this->object->getDsn());
 
@@ -175,10 +163,6 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
         $this->assertEquals('custom:dsn', $this->object->getDsn());
     }
 
-    /**
-     * Test that query params are resolved for binds.
-     * Should be in correct order.
-     */
     public function testResolveParams() {
         $query1 = new Query(Query::SELECT, $this->table);
         $query1->where('id', 1)->where(function(Query\Predicate $where) {

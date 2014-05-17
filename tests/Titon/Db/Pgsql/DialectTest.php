@@ -1,27 +1,16 @@
 <?php
-/**
- * @copyright   2010-2013, The Titon Project
- * @license     http://opensource.org/licenses/bsd-license.php
- * @link        http://titon.io
- */
-
 namespace Titon\Db\Pgsql;
 
 use Exception;
 use Titon\Common\Config;
 use Titon\Db\Driver\Dialect;
+use Titon\Db\Driver\Dialect\Statement;
 use Titon\Db\Driver\Schema;
 use Titon\Db\Query;
 use Titon\Test\Stub\Repository\User;
 
-/**
- * Test class for dialect SQL building.
- */
 class DialectTest extends \Titon\Db\Driver\DialectTest {
 
-    /**
-     * This method is called before a test is executed.
-     */
     protected function setUp() {
         $this->driver = new PgsqlDriver(Config::get('db'));
         $this->driver->connect();
@@ -29,9 +18,19 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->object = $this->driver->getDialect();
     }
 
-    /**
-     * Test create index statement building.
-     */
+    public function testAddStatements() {
+        $this->assertFalse($this->object->hasStatement('foo'));
+        $this->assertEquals(new Statement('TRUNCATE {only} {table} {identity} {action}'), $this->object->getStatement('truncate'));
+
+        $this->object->addStatements([
+            'foo' => new Statement('Foo'),
+            'truncate' => new Statement('TRUNCATE ALL THE THINGS')
+        ]);
+
+        $this->assertTrue($this->object->hasStatement('foo'));
+        $this->assertEquals(new Statement('TRUNCATE ALL THE THINGS'), $this->object->getStatement('truncate'));
+    }
+
     public function testBuildCreateIndex() {
         $query = new Query(Query::CREATE_INDEX, new User());
         $query->fields('profile_id')->from('users')->asAlias('idx');
@@ -54,9 +53,6 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->assertRegExp('/CREATE UNIQUE INDEX CONCURRENTLY (`|\")?idx(`|\")? ON (`|\")?users(`|\")? \((`|\")?profile_id(`|\")?\)/', $this->object->buildCreateIndex($query));
     }
 
-    /**
-     * Test create table statement creation.
-     */
     public function testBuildCreateTable() {
         $schema = new Schema('foobar');
         $schema->addColumn('column', [
@@ -69,12 +65,12 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
 
         $this->assertRegExp('/CREATE\s+TABLE IF NOT EXISTS (`|\")?foobar(`|\")? \(\n(`|\")?column(`|\")? integer NOT NULL\n\);/', $this->object->buildCreateTable($query));
 
+        // With columns
         $schema->addColumn('column', [
             'type' => 'int',
             'ai' => true,
             'primary' => true
         ]);
-
         $this->assertRegExp('/CREATE\s+TABLE IF NOT EXISTS (`|\")?foobar(`|\")? \(\n(`|\")?column(`|\")? integer NOT NULL,\nPRIMARY KEY \((`|\")?column(`|\")?\)\n\);/', $this->object->buildCreateTable($query));
 
         $schema->addColumn('column2', [
@@ -82,9 +78,9 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
             'null' => true,
             'index' => true
         ]);
-
         $this->assertRegExp('/CREATE\s+TABLE IF NOT EXISTS (`|\")?foobar(`|\")? \(\n(`|\")?column(`|\")? integer NOT NULL,\n(`|\")?column2(`|\")? integer NULL,\nPRIMARY KEY \((`|\")?column(`|\")?\)\n\);/', $this->object->buildCreateTable($query));
 
+        // With options
         $schema->addOption('onCommit', PgsqlDialect::DELETE_ROWS);
         $this->assertRegExp('/CREATE\s+TABLE IF NOT EXISTS (`|\")?foobar(`|\")? \(\n(`|\")?column(`|\")? integer NOT NULL,\n(`|\")?column2(`|\")? integer NULL,\nPRIMARY KEY \((`|\")?column(`|\")?\)\n\) ON COMMIT DELETE ROWS;/', $this->object->buildCreateTable($query));
 
@@ -95,16 +91,13 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->assertRegExp('/CREATE\s+TABLE IF NOT EXISTS (`|\")?foobar(`|\")? \(\n(`|\")?column(`|\")? integer NOT NULL,\n(`|\")?column2(`|\")? integer NULL,\nPRIMARY KEY \((`|\")?column(`|\")?\)\n\) ON COMMIT DELETE ROWS TABLESPACE foobar WITH OIDS;/', $this->object->buildCreateTable($query));
     }
 
-    /**
-     * Test delete statement creation.
-     */
     public function testBuildDelete() {
         $query = new Query(Query::DELETE, new User());
 
         $query->from('foobar');
         $this->assertRegExp('/DELETE FROM\s+(`|\")?foobar(`|\")?;/', $this->object->buildDelete($query));
 
-        // pgsql doesn't support limit
+        // PGSQL doesn't support limit
         $query->limit(5);
         $this->assertRegExp('/DELETE FROM\s+(`|\")?foobar(`|\")?;/', $this->object->buildDelete($query));
 
@@ -119,16 +112,10 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->assertRegExp('/DELETE FROM ONLY (`|\")?foobar(`|\")?\s+WHERE (`|\")?id(`|\")? IN \(\?, \?, \?\);/', $this->object->buildDelete($query));
     }
 
-    /**
-     * Test delete statements that contain joins.
-     */
     public function testBuildDeleteJoins() {
         $this->markTestSkipped('PGSQL does not support delete joins');
     }
 
-    /**
-     * Test drop table statement creation.
-     */
     public function testBuildDropTable() {
         $query = new Query(Query::DROP_TABLE, new User());
         $query->from('foobar');
@@ -139,9 +126,6 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->assertRegExp('/DROP TABLE IF EXISTS (`|\")?foobar(`|\")? RESTRICT;/', $this->object->buildDropTable($query));
     }
 
-    /**
-     * Test drop index statement building.
-     */
     public function testBuildDropIndex() {
         $query = new Query(Query::DROP_INDEX, new User());
         $query->from('users')->asAlias('idx');
@@ -152,9 +136,16 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->assertRegExp('/DROP INDEX CONCURRENTLY IF EXISTS (`|\")?idx(`|\")?/', $this->object->buildDropIndex($query));
     }
 
-    /**
-     * Test truncate table statement creation.
-     */
+    public function testBuildSelectLocking() {
+        $query = new PgsqlQuery(Query::SELECT, new User());
+        $query->from('users')->where('name', 'like', '%miles%')->lockForShare();
+
+        $this->assertRegExp('/SELECT\s+\* FROM\s+"users"\s+WHERE "name" LIKE \?\s+FOR SHARE;/', $this->object->buildSelect($query));
+
+        $query->lockForUpdate();
+        $this->assertRegExp('/SELECT\s+\* FROM\s+"users"\s+WHERE "name" LIKE \?\s+FOR UPDATE;/', $this->object->buildSelect($query));
+    }
+
     public function testBuildTruncate() {
         $query = new Query(Query::TRUNCATE, new User());
         $query->from('foobar');
@@ -171,34 +162,14 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->assertRegExp('/TRUNCATE ONLY (`|\")?foobar(`|\")? RESTART IDENTITY CASCADE;/', $this->object->buildTruncate($query));
     }
 
-    /**
-     * Test update statement creation.
-     */
     public function testBuildUpdate() {
         $query = new Query(Query::UPDATE, new User());
-
-        // No fields
-        try {
-            $this->object->buildUpdate($query);
-            $this->assertTrue(false);
-        } catch (Exception $e) {
-            $this->assertTrue(true);
-        }
+        $query->from('foobar');
 
         $query->fields(['username' => 'miles']);
-
-        // No table
-        try {
-            $this->object->buildUpdate($query);
-            $this->assertTrue(false);
-        } catch (Exception $e) {
-            $this->assertTrue(true);
-        }
-
-        $query->from('foobar');
         $this->assertRegExp('/UPDATE\s+(`|\")?foobar(`|\")?\s+SET (`|\")?username(`|\")? = \?;/', $this->object->buildUpdate($query));
 
-        // pgsql doesn't support limit
+        // PGSQL doesn't support limit
         $query->limit(15);
         $this->assertRegExp('/UPDATE\s+(`|\")?foobar(`|\")?\s+SET (`|\")?username(`|\")? = \?;/', $this->object->buildUpdate($query));
 
@@ -219,16 +190,10 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->assertRegExp('/UPDATE ONLY (`|\")?foobar(`|\")?\s+SET (`|\")?email(`|\")? = \?, (`|\")?website(`|\")? = \?\s+WHERE (`|\")?status(`|\")? = \?;/', $this->object->buildUpdate($query));
     }
 
-    /**
-     * Test update statements that contain joins.
-     */
     public function testBuildUpdateJoins() {
         $this->markTestSkipped('PGSQL does not support update joins');
     }
 
-    /**
-     * Test table column formatting builds according to the options defined.
-     */
     public function testFormatColumns() {
         $schema = new Schema('foobar');
         $schema->addColumn('column', [
@@ -316,16 +281,18 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->assertRegExp('/' . $expected . '/', $this->object->formatColumns($schema));
     }
 
-    /**
-     * Test index keys.
-     */
+    public function testFormatFieldsWithJoins() {
+        $query = new Query(Query::SELECT, new User());
+        $query->fields(['id', 'country_id', 'username']);
+        $query->leftJoin(['countries', 'Country'], ['iso'],['users.country_id' => 'Country.id'] );
+
+        $this->assertRegExp('/(`|\")?User(`|\")?\.(`|\")?id(`|\")? AS User__id, (`|\")?User(`|\")?\.(`|\")?country_id(`|\")? AS User__country_id, (`|\")?User(`|\")?\.(`|\")?username(`|\")? AS User__username, (`|\")?Country(`|\")?\.(`|\")?iso(`|\")? AS Country__iso/', $this->object->formatFields($query));
+    }
+
     public function testFormatTableIndex() {
         $this->markTestSkipped('PGSQL does not support CREATE TABLE statement indices');
     }
 
-    /**
-     * Test table keys are built with primary, unique, foreign and index.
-     */
     public function testFormatTableKeys() {
         $schema = new Schema('foobar');
         $schema->addUnique('primary');
@@ -362,13 +329,9 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $schema->addIndex('column2');
 
         // no indices
-
         $this->assertRegExp('/' . $expected . '/', $this->object->formatTableKeys($schema));
     }
 
-    /**
-     * Test unique keys.
-     */
     public function testFormatTableUnique() {
         $data = ['columns' => ['foo'], 'constraint' => '', 'index' => 'idx'];
 
@@ -381,9 +344,6 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->assertRegExp('/CONSTRAINT (`|\")?symbol(`|\")? UNIQUE \((`|\")?foo(`|\")?, (`|\")?bar(`|\")?\)/', $this->object->formatTableUnique($data));
     }
 
-    /**
-     * Test identifier quoting.
-     */
     public function testQuote() {
         $this->assertEquals('"foo"', $this->object->quote('foo'));
         $this->assertEquals('"foo"', $this->object->quote('foo"'));
@@ -395,25 +355,16 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $this->assertEquals('"foo".*', $this->object->quote('foo.*'));
     }
 
-    /**
-     * Test multiple identifier quoting.
-     */
     public function testQuoteList() {
         $this->assertEquals('"foo", "bar", "baz"', $this->object->quoteList(['foo', '"bar', '"baz"']));
         $this->assertEquals('"foo"."bar", "baz"', $this->object->quoteList(['foo.bar', '"baz"']));
     }
 
-    /**
-     * Test select locking types.
-     */
-    public function testSelectLocking() {
-        $query = new PgsqlQuery(Query::SELECT, new User());
-        $query->from('users')->where('name', 'like', '%miles%')->lockForShare();
-
-        $this->assertRegExp('/SELECT\s+\* FROM\s+"users"\s+WHERE "name" LIKE \?\s+FOR SHARE;/', $this->object->buildSelect($query));
-
-        $query->lockForUpdate();
-        $this->assertRegExp('/SELECT\s+\* FROM\s+"users"\s+WHERE "name" LIKE \?\s+FOR UPDATE;/', $this->object->buildSelect($query));
+    public function testRenderStatement() {
+        $this->assertEquals('SELECT  * FROM tableName;', $this->object->renderStatement(Query::SELECT, [
+            'table' => 'tableName',
+            'fields' => '*'
+        ]));
     }
 
 }

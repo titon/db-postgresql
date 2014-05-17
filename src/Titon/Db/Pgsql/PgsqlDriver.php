@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright   2010-2013, The Titon Project
+ * @copyright   2010-2014, The Titon Project
  * @license     http://opensource.org/licenses/bsd-license.php
  * @link        http://titon.io
  */
@@ -8,7 +8,6 @@
 namespace Titon\Db\Pgsql;
 
 use Titon\Db\Driver\AbstractPdoDriver;
-use Titon\Db\Driver\Type\AbstractType;
 use Titon\Db\Repository;
 
 /**
@@ -61,7 +60,7 @@ class PgsqlDriver extends AbstractPdoDriver {
                 }
 
                 // Inherit type defaults
-                $data = AbstractType::factory($type, $this)->getDefaultOptions();
+                $data = $this->getType($type)->getDefaultOptions();
 
                 // Overwrite with custom
                 $data = [

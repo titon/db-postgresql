@@ -1,32 +1,49 @@
 <?php
-/**
- * @copyright   2010-2013, The Titon Project
- * @license     http://opensource.org/licenses/bsd-license.php
- * @link        http://titon.io
- */
-
 namespace Titon\Db\Pgsql;
 
-use Titon\Db\Data\AbstractReadTest;
 use Titon\Db\Entity;
 use Titon\Db\EntityCollection;
-use Titon\Db\Query\Func;
 use Titon\Db\Query;
+use Titon\Db\Query\Func;
 use Titon\Db\Query\Predicate;
 use Titon\Test\Stub\Repository\Book;
 use Titon\Test\Stub\Repository\Order;
 use Titon\Test\Stub\Repository\Stat;
 use Titon\Test\Stub\Repository\User;
+use \DateTime;
 
-/**
- * Test class for database reading.
- */
-class ReadTest extends AbstractReadTest {
+class RepositoryTest extends \Titon\Db\RepositoryTest {
 
-    /**
-     * Test expressions in select statements.
-     */
-    public function testSelectRawExpression() {
+    public function testCreateDropTable() {
+        $sql = sprintf("SELECT COUNT(table_name) FROM information_schema.tables WHERE table_catalog = 'titon_test' AND table_name = '%s';", $this->object->getTable());
+
+        $this->assertEquals(0, $this->object->getDriver()->executeQuery($sql)->count());
+
+        $this->object->createTable();
+
+        $this->assertEquals(1, $this->object->getDriver()->executeQuery($sql)->count());
+
+        $this->object->dropTable();
+
+        $this->assertEquals(0, $this->object->getDriver()->executeQuery($sql)->count());
+    }
+
+    public function testDeleteWithLimit() {
+        $this->markTestSkipped('PgSQL does not support LIMIT in DELETE statements');
+    }
+
+    public function testDeleteWithOrdering() {
+        $this->markTestSkipped('PgSQL does not support ORDER BY in DELETE statements');
+    }
+
+    public function testSelect() {
+        $query = new PgsqlQuery(PgsqlQuery::SELECT, $this->object);
+        $query->from($this->object->getTable(), 'User')->fields('id', 'username');
+
+        $this->assertEquals($query, $this->object->select('id', 'username'));
+    }
+
+    public function testSelectRawExpressions() {
         $this->loadFixtures('Stats');
 
         $stat = new Stat();
@@ -57,9 +74,6 @@ class ReadTest extends AbstractReadTest {
         ]), $query->all());
     }
 
-    /**
-     * Test functions in select statements.
-     */
     public function testSelectFunctions() {
         $this->loadFixtures('Stats');
 
@@ -86,9 +100,6 @@ class ReadTest extends AbstractReadTest {
         ]), $query->all());
     }
 
-    /**
-     * Test row counting.
-     */
     public function testSelectCount() {
         $this->loadFixtures('Books');
 
@@ -105,10 +116,31 @@ class ReadTest extends AbstractReadTest {
         $this->assertEquals(1, $query->count());
     }
 
-    /**
-     * Test order by clause.
-     */
-    public function testOrdering() {
+    public function testSelectGrouping() {
+        $this->loadFixtures('Books');
+
+        $book = new Book();
+
+        // PgSQL group by is different than MySQL
+        // Use DISTINCT ON + multiple group/order by
+        $query = $book->select('id', 'name')
+            ->groupBy('id', 'series_id')
+            ->orderBy([
+                'series_id' => 'asc',
+                'id' => 'asc'
+            ])
+            ->attribute('distinct', function(PgsqlDialect $dialect) {
+                return sprintf($dialect->getClause(PgsqlDialect::DISTINCT_ON), $dialect->quote('series_id'));
+            });
+
+        $this->assertEquals(new EntityCollection([
+            new Entity(['id' => 1, 'name' => 'A Game of Thrones']),
+            new Entity(['id' => 6, 'name' => 'Harry Potter and the Philosopher\'s Stone']),
+            new Entity(['id' => 13, 'name' => 'The Fellowship of the Ring'])
+        ]), $query->all());
+    }
+
+    public function testSelectOrdering() {
         $this->loadFixtures('Books');
 
         $book = new Book();
@@ -156,37 +188,7 @@ class ReadTest extends AbstractReadTest {
         ])->all());
     }
 
-    /**
-     * Test group by clause.
-     */
-    public function testGrouping() {
-        $this->loadFixtures('Books');
-
-        $book = new Book();
-
-        // PgSQL group by is different than MySQL
-        // Use DISTINCT ON + multiple group/order by
-        $query = $book->select('id', 'name')
-            ->groupBy('id', 'series_id')
-            ->orderBy([
-                'series_id' => 'asc',
-                'id' => 'asc'
-            ])
-            ->attribute('distinct', function(PgsqlDialect $dialect) {
-                return sprintf($dialect->getClause(PgsqlDialect::DISTINCT_ON), $dialect->quote('series_id'));
-            });
-
-        $this->assertEquals(new EntityCollection([
-            new Entity(['id' => 1, 'name' => 'A Game of Thrones']),
-            new Entity(['id' => 6, 'name' => 'Harry Potter and the Philosopher\'s Stone']),
-            new Entity(['id' => 13, 'name' => 'The Fellowship of the Ring'])
-        ]), $query->all());
-    }
-
-    /**
-     * Test having predicates using AND conjunction.
-     */
-    public function testHavingAnd() {
+    public function testSelectHavingAnd() {
         $this->loadFixtures('Orders');
 
         $order = new Order();
@@ -226,10 +228,7 @@ class ReadTest extends AbstractReadTest {
         ]), $query->all());
     }
 
-    /**
-     * Test having predicates using AND conjunction.
-     */
-    public function testHavingOr() {
+    public function testSelectHavingOr() {
         $this->loadFixtures('Orders');
 
         $order = new Order();
@@ -277,10 +276,7 @@ class ReadTest extends AbstractReadTest {
         ]), $query->all());
     }
 
-    /**
-     * Test nested having predicates.
-     */
-    public function testHavingNested() {
+    public function testSelectHavingNested() {
         $this->loadFixtures('Orders');
 
         $order = new Order();
@@ -315,17 +311,14 @@ class ReadTest extends AbstractReadTest {
         ]), $query->all());
     }
 
-    /**
-     * Test that right join firstes data.
-     */
-    public function testRightJoin() {
+    public function testSelectRightJoin() {
         $this->loadFixtures(['Users', 'Countries']);
 
         $user = new User();
         $user->update([2, 5], ['country_id' => null]); // Reset some records
 
         $query = $user->select('id', 'username')
-            ->rightJoin($user->getRelation('Country'), [])
+            ->rightJoin(['countries', 'Country'], ['id', 'name', 'iso'], ['User.country_id' => 'Country.id'])
             ->orderBy('User.id', 'asc');
 
         // PgSQL places nulls at the end
@@ -380,10 +373,7 @@ class ReadTest extends AbstractReadTest {
         ]), $query->all());
     }
 
-    /**
-     * Test unions merge multiple selects.
-     */
-    public function testUnions() {
+    public function testSelectUnions() {
         $this->loadFixtures(['Users', 'Books', 'Authors']);
 
         $user = new User();
@@ -424,4 +414,64 @@ class ReadTest extends AbstractReadTest {
         ]), $query->all());
     }
 
+    public function testSelectTypeCastingStatements() {
+        $this->loadFixtures(['Stats', 'Users']);
+
+        $stat = new Stat();
+        $time = time();
+        $date = date('Y-m-d H:i:s', $time);
+        $driver = $stat->getDriver();
+
+        // int
+        $query = $driver->executeQuery($stat->select()->where('health', '>', '100'));
+        $this->assertRegExp("/^SELECT \* FROM (`|\")?stats(`|\")? WHERE (`|\")?health(`|\")? > 100;$/i", $query->getStatement());
+
+        // PgSQL wraps the IN values in single quotes
+        $query = $driver->executeQuery($stat->select()->where('id', [1, '2', 3]));
+        $this->assertRegExp("/^SELECT \* FROM (`|\")?stats(`|\")? WHERE (`|\")?id(`|\")? IN \('1', '2', '3'\);$/i", $query->getStatement());
+
+        // string
+        $query = $driver->executeQuery($stat->select()->where('name', '!=', 123.45));
+        $this->assertRegExp("/^SELECT \* FROM (`|\")?stats(`|\")? WHERE (`|\")?name(`|\")? != '123.45';$/i", $query->getStatement());
+
+        // float (they are strings in PDO)
+        $query = $driver->executeQuery($stat->select()->where('damage', '<', 55.25));
+        $this->assertRegExp("/^SELECT \* FROM (`|\")?stats(`|\")? WHERE (`|\")?damage(`|\")? < '55.25';$/i", $query->getStatement());
+
+        // bool
+        $query = $driver->executeQuery($stat->select()->where('isMelee', true));
+        $this->assertRegExp("/^SELECT \* FROM (`|\")?stats(`|\")? WHERE (`|\")?isMelee(`|\")? = 1;$/i", $query->getStatement());
+
+        $query = $driver->executeQuery($stat->select()->where('isMelee', '0'));
+        $this->assertRegExp("/^SELECT \* FROM (`|\")?stats(`|\")? WHERE (`|\")?isMelee(`|\")? = 0;$/i", $query->getStatement());
+
+        // datetime
+        $query = $driver->executeQuery($this->object->select()->where('created', '>', $time));
+        $this->assertRegExp("/^SELECT \* FROM (`|\")?users(`|\")? WHERE (`|\")?created(`|\")? > '" . $date . "';$/i", $query->getStatement());
+
+        $query = $driver->executeQuery($this->object->select()->where('created', '<=', new DateTime($date)));
+        $this->assertRegExp("/^SELECT \* FROM (`|\")?users(`|\")? WHERE (`|\")?created(`|\")? <= '" . $date . "';$/i", $query->getStatement());
+
+        $query = $driver->executeQuery($this->object->select()->where('created', '!=', $date));
+        $this->assertRegExp("/^SELECT \* FROM (`|\")?users(`|\")? WHERE (`|\")?created(`|\")? != '" . $date . "';$/i", $query->getStatement());
+
+        // null
+        $query = $driver->executeQuery($this->object->select()->where('created', null));
+        $this->assertRegExp("/^SELECT \* FROM (`|\")?users(`|\")? WHERE (`|\")?created(`|\")? IS NULL;$/i", $query->getStatement());
+
+        $query = $driver->executeQuery($this->object->select()->where('created', '!=', null));
+        $this->assertRegExp("/^SELECT \* FROM (`|\")?users(`|\")? WHERE (`|\")?created(`|\")? IS NOT NULL;$/i", $query->getStatement());
+    }
+
+    public function testUpdateMultipleWithLimit() {
+        $this->markTestSkipped('PgSQL does not support LIMIT in UPDATE statements');
+    }
+
+    public function testUpdateMultipleWithOrderBy() {
+        $this->markTestSkipped('PgSQL does not support ORDER BY in UPDATE statements');
+    }
+
+    public function testUpdateTypeBlob() {
+        $this->markTestIncomplete('Blob handling currently not supported');
+    }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright   2010-2013, The Titon Project
+ * @copyright   2010-2014, The Titon Project
  * @license     http://opensource.org/licenses/bsd-license.php
  * @link        http://titon.io
  */
@@ -8,8 +8,8 @@
 namespace Titon\Db\Pgsql;
 
 use Titon\Db\Driver\Dialect\AbstractPdoDialect;
+use Titon\Db\Driver\Dialect\Statement;
 use Titon\Db\Driver\Schema;
-use Titon\Db\Driver\Type\AbstractType;
 use Titon\Db\Query;
 
 /**
@@ -57,68 +57,12 @@ class PgsqlDialect extends AbstractPdoDialect {
     ];
 
     /**
-     * List of full SQL statements.
-     *
-     * @type array
-     */
-    protected $_statements = [
-        Query::INSERT           => 'INSERT INTO {table} {fields} VALUES {values}',
-        Query::SELECT           => 'SELECT {a.distinct} {fields} FROM {table} {joins} {where} {groupBy} {having} {compounds} {orderBy} {limit} {a.lock}',
-        Query::UPDATE           => 'UPDATE {a.only} {table} SET {fields} {where}',
-        Query::DELETE           => 'DELETE FROM {a.only} {table} {joins} {where}',
-        Query::TRUNCATE         => 'TRUNCATE {a.only} {table} {a.identity} {a.action}',
-        Query::CREATE_TABLE     => "CREATE {a.type} {a.temporary} {a.unlogged} TABLE IF NOT EXISTS {table} (\n{columns}{keys}\n) {options}",
-        Query::CREATE_INDEX     => 'CREATE {a.type} INDEX {a.concurrently} {index} ON {table} ({fields})',
-        Query::DROP_TABLE       => 'DROP TABLE IF EXISTS {table} {a.action}',
-        Query::DROP_INDEX       => 'DROP INDEX {a.concurrently} IF EXISTS {index} {a.action}',
-    ];
-
-    /**
-     * Available attributes for each query type.
-     *
-     * @type array
-     */
-    protected $_attributes = [
-        Query::SELECT => [
-            'distinct' => false,
-            'lock' => ''
-        ],
-        Query::UPDATE => [
-            'only' => false
-        ],
-        Query::DELETE => [
-            'only' => false
-        ],
-        Query::TRUNCATE => [
-            'only' => false,
-            'identity' => '', // restart, continue
-            'action' => '' // cascade, restrict
-        ],
-        Query::CREATE_TABLE => [
-            'type' => '',
-            'temporary' => false,
-            'unlogged' => false
-        ],
-        Query::CREATE_INDEX => [
-            'type' => '', // unique
-            'concurrently' => false
-        ],
-        Query::DROP_TABLE => [
-            'action' => '' // cascade, restrict
-        ],
-        Query::DROP_INDEX => [
-            'concurrently' => false,
-            'action' => '' // cascade, restrict
-        ],
-    ];
-
-    /**
      * Modify clauses and keywords.
      */
     public function initialize() {
         parent::initialize();
 
-        $this->_clauses = array_replace($this->_clauses, [
+        $this->addClauses([
             self::DISTINCT_ON   => 'DISTINCT ON (%s)',
             self::JOIN_STRAIGHT => 'INNER JOIN %s ON %s',
             self::MATCH         => '%s',
@@ -130,7 +74,7 @@ class PgsqlDialect extends AbstractPdoDialect {
             self::WITH          => '%s'
         ]);
 
-        $this->_keywords = array_replace($this->_keywords, [
+        $this->addKeywords([
             self::CONCURRENTLY      => 'CONCURRENTLY',
             self::CONTINUE_IDENTITY => 'CONTINUE IDENTITY',
             self::DELETE_ROWS       => 'DELETE ROWS',
@@ -154,6 +98,18 @@ class PgsqlDialect extends AbstractPdoDialect {
             self::WITH_OIDS         => 'WITH OIDS',
             self::WITHOUT_OIDS      => 'WITHOUT OIDS'
         ]);
+
+        $this->addStatements([
+            Query::INSERT        => new Statement('INSERT INTO {table} {fields} VALUES {values}'),
+            Query::SELECT        => new Statement('SELECT {distinct} {fields} FROM {table} {joins} {where} {groupBy} {having} {compounds} {orderBy} {limit} {lock}'),
+            Query::UPDATE        => new Statement('UPDATE {only} {table} SET {fields} {where}'),
+            Query::DELETE        => new Statement('DELETE FROM {only} {table} {joins} {where}'),
+            Query::TRUNCATE      => new Statement('TRUNCATE {only} {table} {identity} {action}'),
+            Query::CREATE_TABLE  => new Statement("CREATE {type} {temporary} {unlogged} TABLE IF NOT EXISTS {table} (\n{columns}{keys}\n) {options}"),
+            Query::CREATE_INDEX  => new Statement('CREATE {type} INDEX {concurrently} {index} ON {table} ({fields})'),
+            Query::DROP_TABLE    => new Statement('DROP TABLE IF EXISTS {table} {action}'),
+            Query::DROP_INDEX    => new Statement('DROP INDEX {concurrently} IF EXISTS {index} {action}')
+        ]);
     }
 
     /**
@@ -163,10 +119,9 @@ class PgsqlDialect extends AbstractPdoDialect {
         $columns = [];
 
         foreach ($schema->getColumns() as $column => $options) {
-            $dataType = AbstractType::factory($options['type'], $this->getDriver());
-
-            $options = $options + $dataType->getDefaultOptions();
             $type = $options['type'];
+            $dataType = $this->getDriver()->getType($type);
+            $options = $options + $dataType->getDefaultOptions();
 
             if ($type === 'int') {
                 $type = 'integer';
