@@ -279,6 +279,15 @@ class DialectTest extends \Titon\Db\Driver\DialectTest {
         $expected .= ',\n(`|\")?column5(`|\")? varchar\(255\) COLLATE en_US NULL';
 
         $this->assertRegExp('/' . $expected . '/', $this->object->formatColumns($schema));
+
+        $schema->addColumn('column6', [
+            'type' => 'varchar',
+            'constraint' => 'foobar'
+        ]);
+
+        $expected .= ',\n(`|\")?column6(`|\")? varchar\(255\) CONSTRAINT "foobar" NULL';
+
+        $this->assertRegExp('/' . $expected . '/', $this->object->formatColumns($schema));
     }
 
     public function testFormatFieldsWithJoins() {

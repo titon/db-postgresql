@@ -50,15 +50,6 @@ class PgsqlDriver extends AbstractPdoDriver {
                 $type = strtolower($column['data_type']);
                 $length = $column['character_maximum_length'];
 
-                // Determine type and length
-                if (preg_match('/([a-z\s]+)(?:\(([0-9,]+)\))?/is', $type, $matches)) {
-                    $type = $matches[1];
-
-                    if (isset($matches[2])) {
-                        $length = $matches[2];
-                    }
-                }
-
                 // Inherit type defaults
                 $data = $this->getType($type)->getDefaultOptions();
 
@@ -127,6 +118,7 @@ class PgsqlDriver extends AbstractPdoDriver {
 
     /**
      * {@inheritdoc}
+     * @codeCoverageIgnore
      */
     public function getSupportedTypes() {
         // TODO
