@@ -1,4 +1,4 @@
-# DB\PostgreSQL v0.4.0 [![Build Status](https://travis-ci.org/titon/db-postgresql.png)](https://travis-ci.org/titon/db-postgresql) #
+# DB\PostgreSQL v0.4.1 [![Build Status](https://travis-ci.org/titon/db-postgresql.png)](https://travis-ci.org/titon/db-postgresql) #
 
 Provides PostgreSQL access for the Titon database package.
 
