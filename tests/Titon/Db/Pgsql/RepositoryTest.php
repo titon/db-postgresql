@@ -37,16 +37,6 @@ class RepositoryTest extends \Titon\Db\RepositoryTest {
         $this->markTestSkipped('PgSQL does not support ORDER BY in DELETE statements');
     }
 
-    public function testGetSchemaThroughDescribe() {
-        $this->loadFixtures('Users'); // Requires table to be created
-
-        $repo = new Repository(['table' => 'users']);
-        $schema = $repo->getSchema();
-
-        $this->assertInstanceOf('Titon\Db\Driver\Schema', $schema);
-        $this->assertArraysEqual(['id', 'country_id', 'username', 'password', 'email', 'firstName', 'lastName', 'age', 'created', 'modified'], array_keys($schema->getColumns()));
-    }
-
     public function testSelect() {
         $query = new PgsqlQuery(PgsqlQuery::SELECT, $this->object);
         $query->from($this->object->getTable(), 'User')->fields('id', 'username');
@@ -111,7 +101,7 @@ class RepositoryTest extends \Titon\Db\RepositoryTest {
         ]), $query->all());
     }
 
-    public function testSelectCount() {
+    public function testSelectAggregateCount() {
         $this->loadFixtures('Books');
 
         $book = new Book();
