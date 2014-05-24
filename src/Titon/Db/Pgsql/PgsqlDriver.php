@@ -37,8 +37,8 @@ class PgsqlDriver extends AbstractPdoDriver {
      * @uses Titon\Db\Type\AbstractType
      */
     public function describeTable($table) {
-        return $this->cache([__METHOD__, $table], function() use ($table) {
-            $columns = $this->executeQuery('SELECT * FROM information_schema.columns WHERE table_catalog = ? AND table_schema = \'public\' AND table_name = ?;', [$this->getDatabase(), $table])->find();
+        return $this->cacheQuery([__METHOD__, $table], function(PgsqlDriver $driver) use ($table) {
+            $columns = $driver->executeQuery('SELECT * FROM information_schema.columns WHERE table_catalog = ? AND table_schema = ? AND table_name = ?;', [$driver->getDatabase(), 'public', $table])->find();
             $schema = [];
 
             if (!$columns) {
@@ -51,7 +51,7 @@ class PgsqlDriver extends AbstractPdoDriver {
                 $length = $column['character_maximum_length'];
 
                 // Inherit type defaults
-                $data = $this->getType($type)->getDefaultOptions();
+                $data = $driver->getType($type)->getDefaultOptions();
 
                 // Overwrite with custom
                 $data = [
@@ -84,7 +84,7 @@ class PgsqlDriver extends AbstractPdoDriver {
             }
 
             return $schema;
-        });
+        }, '+1 year');
     }
 
     /**
@@ -195,8 +195,8 @@ class PgsqlDriver extends AbstractPdoDriver {
     public function listTables($database = null) {
         $database = $database ?: $this->getDatabase();
 
-        return $this->cache([__METHOD__, $database], function() use ($database) {
-            $tables = $this->executeQuery('SELECT * FROM information_schema.tables WHERE table_schema = \'public\' AND table_catalog = ?;', [$database])->find();
+        return $this->cacheQuery([__METHOD__, $database], function(PgsqlDriver $driver) use ($database) {
+            $tables = $driver->executeQuery('SELECT * FROM information_schema.tables WHERE table_schema = ? AND table_catalog = ?;', ['public', $database])->find();
             $schema = [];
 
             if (!$tables) {
@@ -208,7 +208,7 @@ class PgsqlDriver extends AbstractPdoDriver {
             }
 
             return $schema;
-        });
+        }, '+1 year');
     }
 
     /**
