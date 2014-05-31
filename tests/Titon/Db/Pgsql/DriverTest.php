@@ -179,7 +179,7 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
 
         // Include fields
         $query2 = new Query(Query::UPDATE, $this->table);
-        $query2->fields([
+        $query2->data([
             'username' => 'miles',
             'age' => 26
         ])->where('id', 666);
@@ -192,7 +192,7 @@ class DriverTest extends \Titon\Db\Driver\PdoDriverTest {
 
         // All at once!
         $query3 = new Query(Query::UPDATE, $this->table);
-        $query3->fields([
+        $query3->data([
             'username' => 'miles',
             'age' => 26
         ])->orWhere(function(Query\Predicate $where) {

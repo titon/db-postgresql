@@ -31,7 +31,7 @@ class DatetimeTypeTest extends TestCase {
         $this->assertSame('2011-03-11 21:05:29+0000', $this->object->to('2011-03-11 21:05:29')); // Can't pass timezone
         $this->assertSame('1985-06-06 12:33:00+0000', $this->object->to('June 6th 1985, 12:33pm')); // Can't pass timezone
         $this->assertSame('1995-11-30 02:44:55-0800', $this->object->to(new DateTime('1995-11-30 02:44:55', new DateTimeZone('America/Los_Angeles'))));
-        $this->assertSame('1988-02-26 09:32:45-0800', $this->object->to([
+        $this->assertSame('1988-02-26 01:32:45-0800', $this->object->to([
             'hour' => 9,
             'minute' => 32,
             'second' => 45,
