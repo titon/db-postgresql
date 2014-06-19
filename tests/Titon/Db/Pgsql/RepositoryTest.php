@@ -37,6 +37,24 @@ class RepositoryTest extends \Titon\Db\RepositoryTest {
         $this->markTestSkipped('PgSQL does not support ORDER BY in DELETE statements');
     }
 
+    public function testFindLastReversedOrder() {
+        $this->loadFixtures('Users');
+
+        // PGSQL returns empty field values first
+        $this->assertEquals(new Entity([
+            'id' => 5,
+            'country_id' => 4,
+            'username' => 'wolverine',
+            'firstName' => 'Logan',
+            'lastName' => '',
+            'password' => '1Z5895jf72yL77h',
+            'email' => 'wolverine@email.com',
+            'age' => 355,
+            'created' => '2000-11-30 21:22:34',
+            'modified' => null
+        ]), $this->object->select()->orderBy('lastName', 'asc')->last());
+    }
+
     public function testSelect() {
         $query = new PgsqlQuery(PgsqlQuery::SELECT, $this->object);
         $query->from($this->object->getTable(), 'User')->fields('id', 'username');
